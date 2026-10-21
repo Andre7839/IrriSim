@@ -60,6 +60,7 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
 .qp{background:var(--color-background-danger);color:var(--color-text-danger)}
 /* Charts */
 .ch2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.ch3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
 .ct{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
 /* Controls */
 .abt{background:none;border:.5px solid var(--color-border-tertiary);border-radius:7px;padding:6px 9px;width:100%;text-align:left;cursor:pointer;font-size:13px;color:var(--color-text-secondary);display:flex;justify-content:space-between;font-family:var(--font-sans)}
@@ -76,6 +77,8 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
 .qi{font-size:12px;color:var(--color-text-secondary);margin-top:-2px;font-style:italic}
 .rbtn{background:var(--color-background-info);color:var(--color-text-info);border:none;border-radius:8px;padding:9px;font-size:14px;font-weight:500;cursor:pointer;width:100%;font-family:var(--font-sans)}
 .rbtn:hover{opacity:.85}
+.xbtn{background:transparent;color:var(--color-text-secondary);border:1.5px solid var(--color-border-secondary);border-radius:8px;padding:7px 9px;font-size:13px;font-weight:500;cursor:pointer;width:100%;font-family:var(--font-sans);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
+.xbtn:hover{background:var(--color-background-secondary)}
 </style>
 </head>
 <body>
@@ -103,6 +106,23 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
   </div>
 </div>
 
+<!-- ── Key performance indicators (top) ── -->
+<div class="mg" style="margin-bottom:6px">
+  <div class="mc"><div class="mll">Distribution uniformity</div><div class="mv" id="mDU">—</div><div class="mu">DU<sub>LQ</sub> (%)</div><div id="qDU"></div></div>
+  <div class="mc"><div class="mll">Christiansen CU</div><div class="mv" id="mCU">—</div><div class="mu">CU (%)</div><div id="qCU"></div></div>
+  <div class="mc"><div class="mll">Application efficiency</div><div class="mv" id="mEa">—</div><div class="mu">Ea (%)</div><div id="qEa"></div></div>
+  <div class="mc"><div class="mll">Avg / LQ depth</div><div class="mv" id="mZZ">—</div><div class="mu" id="mZZu">mm</div></div>
+</div>
+<div class="mg5" style="margin-bottom:4px">
+  <div class="mc"><div class="mll">Deep percolation</div><div class="mv" id="mDP">—</div><div class="mu" id="mDPu">mm</div></div>
+  <div class="mc"><div class="mll">Tailwater runoff</div><div class="mv" id="mTW">—</div><div class="mu" id="mTWu">mm</div></div>
+  <div class="mc" id="mcSO"><div class="mll">Side overflow</div><div class="mv" id="mSO">—</div><div class="mu" id="mSOu">mm</div></div>
+  <div class="mc" id="mcTO"><div class="mll">End overflow</div><div class="mv" id="mTO">—</div><div class="mu" id="mTOu">mm</div></div>
+  <div class="mc"><div class="mll">Rec. cutoff time</div><div class="mv" id="mTR">—</div><div class="mu">min</div></div>
+</div>
+<span id="optQLine" hidden></span><span id="volBal" hidden></span><div id="volBalDetail" hidden></div>
+
+<!-- ── Simulation: controls left, canvas + charts right ── -->
 <div class="row">
 <div class="cp">
   <div>
@@ -147,37 +167,22 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
   <div><div class="rw"><label class="sl" for="sTco">Cutoff time</label><span class="sv" id="vTco">120 min</span></div><input type="range" id="sTco" min="10" max="480" step="5" value="120"></div>
   <div><div class="rw"><label class="sl" for="sSpd">Animation speed</label><span class="sv" id="vSpd">30 min/s</span></div><input type="range" id="sSpd" min="5" max="200" step="5" value="30"></div>
   <button class="rbtn" id="bRun" onclick="handleRun()">&#9654; Run simulation</button>
-  <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.9;border-top:.5px solid var(--color-border-tertiary);padding-top:5px">Z = k·τ<sup>a</sup>+f₀·τ &nbsp;·&nbsp; Lewis–Milne advance &nbsp;·&nbsp; Kinematic wave recession</div>
-</div>
-<div class="cc">
-  <canvas id="fC" style="width:100%;height:370px;display:block"></canvas>
-  <div class="co"><span class="ctd" id="tD">t = 0 min</span><span class="ph pc" id="pD">Ready</span></div>
-</div>
-</div>
+  <button class="xbtn" onclick="exportExcel()" title="Export results to Excel">&#8600; Export results (.xlsx)</button>
 
-<div class="mg">
-  <div class="mc"><div class="mll">Distribution uniformity</div><div class="mv" id="mDU">—</div><div class="mu">DU<sub>LQ</sub> (%)</div><div id="qDU"></div></div>
-  <div class="mc"><div class="mll">Christiansen CU</div><div class="mv" id="mCU">—</div><div class="mu">CU (%)</div><div id="qCU"></div></div>
-  <div class="mc"><div class="mll">Application efficiency</div><div class="mv" id="mEa">—</div><div class="mu">Ea (%)</div><div id="qEa"></div></div>
-  <div class="mc"><div class="mll">Avg / LQ depth</div><div class="mv" id="mZZ">—</div><div class="mu" id="mZZu">mm</div></div>
 </div>
-<div class="mg5">
-  <div class="mc"><div class="mll">Deep percolation</div><div class="mv" id="mDP">—</div><div class="mu" id="mDPu">mm</div></div>
-  <div class="mc"><div class="mll">Tailwater runoff</div><div class="mv" id="mTW">—</div><div class="mu" id="mTWu">mm</div></div>
-  <div class="mc" id="mcSO"><div class="mll">Side overflow</div><div class="mv" id="mSO">—</div><div class="mu" id="mSOu">mm</div></div>
-  <div class="mc" id="mcTO"><div class="mll">End overflow</div><div class="mv" id="mTO">—</div><div class="mu" id="mTOu">mm</div></div>
-  <div class="mc"><div class="mll">Rec. cutoff time</div><div class="mv" id="mTR">—</div><div class="mu">min</div></div>
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+  <div class="cc">
+    <canvas id="fC" style="width:100%;height:310px;display:block"></canvas>
+    <div class="co"><span class="ctd" id="tD">t = 0 min</span><span class="ph pc" id="pD">Ready</span></div>
+  </div>
+  <div class="ch2" style="margin-bottom:0">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><div class="ct">Water surface profile</div><div style="position:relative;height:155px"><canvas id="wpC"></canvas></div></div>
+      <div><div class="ct">Infiltration distribution Z(x)</div><div style="position:relative;height:155px"><canvas id="zC"></canvas></div></div>
+    </div>
+    <div><div class="ct">Time-space diagram</div><div style="position:relative;height:320px"><canvas id="tsC"></canvas></div></div>
+  </div>
 </div>
-<div style="font-size:11px;color:var(--color-text-secondary);margin:-4px 0 2px;display:flex;gap:16px;flex-wrap:wrap">
-  <span id="optQLine">Optimal discharge: —</span>
-  <span id="volBal">Volume balance: —</span>
-</div>
-<div id="volBalDetail" style="font-size:11px;color:var(--color-text-secondary);margin:0 0 8px;display:none"></div>
-
-<div style="margin-bottom:8px"><div class="ct">Water surface profile</div><div style="position:relative;height:160px"><canvas id="wpC"></canvas></div></div>
-<div class="ch2">
-  <div><div class="ct">Time-space diagram</div><div style="position:relative;height:195px"><canvas id="tsC"></canvas></div></div>
-  <div><div class="ct">Infiltration distribution Z(x)</div><div style="position:relative;height:195px"><canvas id="zC"></canvas></div></div>
 </div>
 
 <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--color-text-secondary);padding-top:4px">
@@ -195,6 +200,7 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
 </div><!-- #wrap -->
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 const SOILS={
   clay:{k:1.5,a:.25,f0:.15,nM:.15},siltyClay:{k:2.0,a:.30,f0:.18,nM:.14},
@@ -482,7 +488,7 @@ function yFillDepth(t,r){
   return r.S<1e-5?yAvg:Math.min(2.2*yAvg,yAvg+r.S*r.L);
 }
 function drawField(t,r){
-  const dpr=window.devicePixelRatio||1,W=fc.offsetWidth||440,H=370;
+  const dpr=window.devicePixelRatio||1,W=fc.offsetWidth||440,H=fc.offsetHeight||310;
   fc.width=W*dpr;fc.height=H*dpr;cx.scale(dpr,dpr);
   const ML=50,MR=14,MT=38,MB=22,fW=W-ML-MR,fH=H-MT-MB;
   const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
@@ -778,6 +784,80 @@ function updPhase(t,r){
   else if(filling){p.className='ph pf';p.textContent='Filling';}
   else if(t>=r.Tco&&t<r.tEnd-5){p.className='ph pr';p.textContent='Recession';}
   else{p.className='ph pc';p.textContent='Complete';}
+}
+function exportExcel(){
+  if(!simRes||!simRes.tA||simRes.tA[1]>=1000){alert('Run the simulation first, then export.');return;}
+  if(typeof XLSX==='undefined'){alert('Excel library not loaded — please try again in a moment.');return;}
+  const p=getP(),r=simRes,eff=computeEff(r);
+  const SI=SYS==='SI',lU=SI?'m':'ft',dU=SI?'mm':'in',conv=SI?1:0.03937;
+  const f1=v=>isFinite(v)?+v.toFixed(1):null,f2=v=>isFinite(v)?+v.toFixed(2):null,f3=v=>isFinite(v)?+v.toFixed(3):null;
+  const Vapp=eff.V_app,Vinf=eff.Vb+eff.Vd,vtw=eff.vtw,Vso=r.V_sideOv||0,Vto=r.V_tailOv||0;
+  const Vtot=Vinf+vtw+Vso+Vto,balErr=Vapp>0?Math.abs(Vtot-Vapp)/Vapp*100:0;
+  const mm=v=>f2(v/r.L*1e3*(SI?1:conv));
+
+  // ── Sheet 1: Summary ──
+  const S1=[
+    ['IrriSim — Surface Irrigation Simulation Results'],
+    ['Generated',new Date().toLocaleString()],
+    [],
+    ['INPUT PARAMETERS','Value','Unit'],
+    ['Soil texture',document.getElementById('sSoil').options[document.getElementById('sSoil').selectedIndex].text,''],
+    ['Kostiakov k',f3(p.k),'mm/minᵃ'],
+    ['Exponent a',f3(p.a),''],
+    ['Final rate f₀',f3(p.f0),'mm/min'],
+    ['Border end',r.openEnd?'Open':'Closed',''],
+    ['Slope',f2(p.S*100),'%'],
+    ['Border width',p.W,lU],
+    ['Border height',f2(p.bH),lU],
+    ['Field length',p.L,lU],
+    ['Total discharge Q',p.Q,SI?'m³/h':'ft³/h'],
+    ['Unit discharge q',f3(p.q),SI?'m³/h·m':'ft³/h·ft'],
+    ['Target depth Zreq',f1(SI?p.Zreq:p.Zreq*conv),dU],
+    ['Cutoff time Tco',p.Tco,'min'],
+    [],
+    ['PERFORMANCE METRICS','Value','Unit'],
+    ['Distribution uniformity DU_LQ',f1(r.DU),'%'],
+    ['Christiansen CU',f1(r.CU),'%'],
+    ['Application efficiency Ea',f1(eff.Ea),'%'],
+    ['Average infiltration depth',f1(SI?r.Zavg:r.Zavg*conv),dU],
+    ['Low-quarter avg depth',f1(SI?r.Zlq:r.Zlq*conv),dU],
+    ['Deep percolation',f2(SI?eff.DPmm:eff.DPmm*conv),dU],
+    ['Deep percolation',f1(eff.DPpct),'% of applied'],
+    ['Tailwater runoff',f2(SI?eff.TWmm:eff.TWmm*conv),dU],
+    ['Tailwater runoff',f1(eff.TWpct),'% of applied'],
+    ['Side overflow',f2(SI?eff.SOMm:eff.SOMm*conv),dU],
+    ['End overflow',f2(SI?eff.TOMm:eff.TOMm*conv),dU],
+    [],
+    ['VOLUME BALANCE','Value ('+dU+')','% of applied'],
+    ['Applied',mm(Vapp),'100.0'],
+    ['Infiltrated (beneficial)',mm(eff.Vb),f1(eff.Vb/Vapp*100)],
+    ['Deep percolation',mm(eff.Vd),f1(eff.Vd/Vapp*100)],
+    ['Tailwater runoff',mm(vtw),f1(vtw/Vapp*100)],
+    ['Side overflow',mm(Vso),f1(Vso/Vapp*100)],
+    ['End overflow',mm(Vto),f1(Vto/Vapp*100)],
+    ['Sum of components',mm(Vtot),f1(Vtot/Vapp*100)],
+    ['Balance error',f2(balErr),'%'],
+  ];
+
+  // ── Sheet 2: Spatial profile ──
+  const dx=r.L/r.N;
+  const S2=[['Segment',`Distance (${lU})`,'Advance time (min)','Recession time (min)','Opportunity time (min)',`Infiltration Z (${dU})`]];
+  for(let i=1;i<=r.N;i++){
+    const tA=isFinite(r.tA[i])?f1(r.tA[i]):null;
+    const tR=isFinite(r.tR[i])?f1(r.tR[i]):null;
+    const tau=(tA!==null&&tR!==null)?f1(r.tR[i]-r.tA[i]):null;
+    const Z=f2(r.Z[i]*(SI?1:conv));
+    S2.push([i,f2(i*dx),tA,tR,tau,Z]);
+  }
+
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet(S1);
+  ws1['!cols']=[{wch:34},{wch:14},{wch:16}];
+  const ws2=XLSX.utils.aoa_to_sheet(S2);
+  ws2['!cols']=[{wch:10},{wch:14},{wch:20},{wch:22},{wch:22},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws1,'Summary');
+  XLSX.utils.book_append_sheet(wb,ws2,'Spatial Profile');
+  XLSX.writeFile(wb,`IrriSim_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 function handleRun(){if(anim.run){stopAnim();}else{startAnim();}}
 function startAnim(){
