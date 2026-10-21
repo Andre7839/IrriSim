@@ -168,10 +168,11 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
   <div class="mc" id="mcTO"><div class="mll">End overflow</div><div class="mv" id="mTO">—</div><div class="mu" id="mTOu">mm</div></div>
   <div class="mc"><div class="mll">Rec. cutoff time</div><div class="mv" id="mTR">—</div><div class="mu">min</div></div>
 </div>
-<div style="font-size:11px;color:var(--color-text-secondary);margin:-4px 0 8px;display:flex;gap:16px;flex-wrap:wrap">
+<div style="font-size:11px;color:var(--color-text-secondary);margin:-4px 0 2px;display:flex;gap:16px;flex-wrap:wrap">
   <span id="optQLine">Optimal discharge: —</span>
   <span id="volBal">Volume balance: —</span>
 </div>
+<div id="volBalDetail" style="font-size:11px;color:var(--color-text-secondary);margin:0 0 8px;display:none"></div>
 
 <div style="margin-bottom:8px"><div class="ct">Water surface profile</div><div style="position:relative;height:160px"><canvas id="wpC"></canvas></div></div>
 <div class="ch2">
@@ -308,7 +309,7 @@ function compute(p,fast){
   // Compute surface water volume at cutoff, check if it exceeds bH
   if(!openEnd&&isFinite(tAdvEnd)&&tAdvEnd<Tco){
     const dxf=L/NS;
-    const Vin_co=(q/60)*Tco;
+    const Vin_co=(Math.min(q,q_max)/60)*Tco; // net inflow: side overflow already left the field
     let Vinf_co=0;
     for(let i=0;i<NS;i++){
       const tau=Math.max(0,Tco-tA[i]);
@@ -380,7 +381,7 @@ function computeEffAtT(r,t){
   // End overflow (filling stage) at time t
   let V_tailOv=0;
   if(!openEnd&&isFinite(tAdvEnd)&&t>=tAdvEnd&&t<=Tco){
-    const dxf=L/N,Vin_t=(q/60)*t;
+    const dxf=L/N,Vin_t=(Math.min(q,r.q_max||q)/60)*Math.min(t,Tco); // net inflow to border
     let Vinf_t=0;
     for(let i=0;i<N;i++){
       const tau=Math.max(0,t-(r.tA[i]||0));
@@ -469,7 +470,8 @@ function yFillDepth(t,r){
   // S=0 basin: uniform depth everywhere; S>0 sloped: tail depth ≈ 2× average
   if(!r||r.openEnd||!isFinite(r.tAdvEnd)||t<r.tAdvEnd)return r?r.y0:0;
   const tF=Math.min(t,r.Tco),dx=r.L/r.N;
-  const Vin=(r.q/60)*tF; // m²/m width total inflow
+  const qEff=Math.min(r.q,r.q_max||r.q); // net inflow: subtract side overflow lost laterally
+  const Vin=(qEff/60)*tF; // m²/m width net inflow to border
   let Vinf=0;
   for(let i=0;i<r.N;i++){
     const tau=Math.max(0,tF-(r.tA[i]||0));
@@ -749,8 +751,24 @@ function setMetrics(r,eff,opt,tcoRec){
   document.getElementById('mTR').textContent=tcoRec!=null?tcoRec+'':'N/A';
   document.getElementById('qDU').innerHTML=qual(r.DU,80,65);document.getElementById('qCU').innerHTML=qual(r.CU,80,65);document.getElementById('qEa').innerHTML=qual(eff.Ea,75,55);
   const oQ=SYS==='SI'?opt.Q+' m³/h':Math.round(opt.Q*35.315)+' ft³/h';document.getElementById('optQLine').textContent=`Optimal Q: ${oQ}`;
-  const V=eff.V_app,tot=eff.Vb+eff.Vd+eff.vtw+r.V_ov,bal=V>0?Math.abs(tot-V)/V*100:0;
-  document.getElementById('volBal').textContent=`Volume balance: ${bal<1?'✓ OK':'⚠ '+bal.toFixed(1)+'% error'}`;
+  // Volume balance breakdown
+  const Vapp=eff.V_app,Vinf=eff.Vb+eff.Vd,vtw=eff.vtw,Vso=r.V_sideOv||0,Vto=r.V_tailOv||0;
+  const Vtot=Vinf+vtw+Vso+Vto,bal=Vapp>0?Math.abs(Vtot-Vapp)/Vapp*100:0;
+  const ok=bal<1,sym=ok?'✓ OK':'⚠ '+bal.toFixed(1)+'%';
+  document.getElementById('volBal').textContent=`Volume balance: ${sym}`;
+  const mm=v=>(v/r.L*1e3).toFixed(1);
+  const pc=v=>Vapp>0?(v/Vapp*100).toFixed(1):'0.0';
+  const det=document.getElementById('volBalDetail');
+  if(Vapp>0){
+    det.style.display='';
+    det.innerHTML=
+      `Applied: <b>${mm(Vapp)} mm</b> = `+
+      `Infilt. <b>${mm(Vinf)} mm</b> (${pc(Vinf)}%) + `+
+      `TW <b>${mm(vtw)} mm</b> (${pc(vtw)}%) + `+
+      `SideOv <b>${mm(Vso)} mm</b> (${pc(Vso)}%) + `+
+      `EndOv <b>${mm(Vto)} mm</b> (${pc(Vto)}%) `+
+      `= <b>${mm(Vtot)} mm</b> ${ok?'<span style="color:#2a9;font-weight:700">✓':'<span style="color:#e74;font-weight:700">⚠'} (${pc(Vtot)}%)</span>`;
+  } else { det.style.display='none'; }
 }
 function updPhase(t,r){
   document.getElementById('tD').textContent=`t = ${t.toFixed(1)} min`;
