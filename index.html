@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IrriSim — Surface Irrigation Design Tool</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --color-text-primary:#111827;--color-text-secondary:#6b7280;--color-text-tertiary:#9ca3af;
+  --color-text-info:#1d4ed8;--color-text-success:#15803d;--color-text-warning:#92400e;--color-text-danger:#b91c1c;
+  --color-background-primary:#ffffff;--color-background-secondary:#f3f4f6;
+  --color-background-info:#eff6ff;--color-background-success:#f0fdf4;
+  --color-background-warning:#fffbeb;--color-background-danger:#fef2f2;
+  --color-border-tertiary:rgba(0,0,0,0.1);--color-border-secondary:rgba(0,0,0,0.18);
+  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --border-radius-md:8px;--border-radius-lg:12px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --color-text-primary:#f9fafb;--color-text-secondary:#9ca3af;--color-text-tertiary:#6b7280;
+  --color-text-info:#60a5fa;--color-text-success:#4ade80;--color-text-warning:#fbbf24;--color-text-danger:#f87171;
+  --color-background-primary:#111827;--color-background-secondary:#1f2937;
+  --color-background-info:#1e3a5f;--color-background-success:#14532d;
+  --color-background-warning:#78350f;--color-background-danger:#7f1d1d;
+  --color-border-tertiary:rgba(255,255,255,0.1);--color-border-secondary:rgba(255,255,255,0.18);
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-primary);color:var(--color-text-primary);padding:16px 20px;min-height:100vh}
+#wrap{max-width:900px;margin:0 auto}
+input[type=range]{width:100%;accent-color:#4494CC;height:4px;cursor:pointer}
+select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertiary);border-radius:6px;padding:4px 6px;background:var(--color-background-secondary);color:var(--color-text-primary)}
+/* Layout */
+.row{display:grid;grid-template-columns:248px 1fr;gap:12px;margin-bottom:12px;align-items:start}
+.cp{display:flex;flex-direction:column;gap:7px}
+.rw{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
+.sl{font-size:13px;color:var(--color-text-secondary);font-weight:500}
+.sv{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.sep{font-size:10px;font-weight:500;color:var(--color-text-secondary);border-top:.5px solid var(--color-border-tertiary);padding-top:6px;margin-top:2px;letter-spacing:.06em;text-transform:uppercase}
+/* Canvas */
+.cc{position:relative;border:.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden;background:var(--color-background-secondary)}
+.co{position:absolute;top:9px;left:11px;display:flex;gap:7px;align-items:center;pointer-events:none}
+.ctd{font-size:13px;background:rgba(0,0,0,.55);color:#fff;padding:3px 10px;border-radius:5px;font-weight:500}
+.ph{display:inline-block;padding:3px 10px;border-radius:5px;font-size:13px;font-weight:500}
+.pa{background:var(--color-background-info);color:var(--color-text-info)}
+.pf{background:var(--color-background-success);color:var(--color-text-success)}
+.pr{background:var(--color-background-warning);color:var(--color-text-warning)}
+.pc{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+/* Metric cards */
+.mg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px}
+.mg5{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:7px}
+.mc{background:var(--color-background-secondary);border-radius:8px;padding:9px 10px;text-align:center}
+.mc.ov{background:var(--color-background-danger)}
+.mll{font-size:12px;color:var(--color-text-secondary);line-height:1.4;margin-bottom:3px}
+.mc.ov .mll,.mc.ov .mv,.mc.ov .mu{color:var(--color-text-danger)}
+.mv{font-size:22px;font-weight:500;line-height:1.1}
+.mu{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.mq{display:inline-block;font-size:10px;padding:2px 6px;border-radius:4px;margin-top:3px}
+.qg{background:var(--color-background-success);color:var(--color-text-success)}
+.qf{background:var(--color-background-warning);color:var(--color-text-warning)}
+.qp{background:var(--color-background-danger);color:var(--color-text-danger)}
+/* Charts */
+.ch2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.ct{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:5px;letter-spacing:.04em;text-transform:uppercase}
+/* Controls */
+.abt{background:none;border:.5px solid var(--color-border-tertiary);border-radius:7px;padding:6px 9px;width:100%;text-align:left;cursor:pointer;font-size:13px;color:var(--color-text-secondary);display:flex;justify-content:space-between;font-family:var(--font-sans)}
+.ac{overflow:hidden;max-height:0;transition:max-height .25s}
+.et{display:flex;border:.5px solid var(--color-border-tertiary);border-radius:7px;overflow:hidden}
+.eb{flex:1;background:none;border:none;padding:6px 0;font-size:13px;cursor:pointer;color:var(--color-text-primary);font-weight:500;transition:opacity .15s;font-family:var(--font-sans)}
+.eb:not(.on){color:var(--color-text-info);background:var(--color-background-info)}
+.eb.on{opacity:.35;cursor:not-allowed;font-weight:400;background:none;color:var(--color-text-secondary)}
+.eb:first-child{border-right:.5px solid var(--color-border-tertiary)}
+.utog{display:flex;border:.5px solid var(--color-border-tertiary);border-radius:7px;overflow:hidden}
+.ub{flex:1;background:none;border:none;padding:5px 0;font-size:13px;cursor:pointer;color:var(--color-text-secondary);font-weight:500;font-family:var(--font-sans)}
+.ub.on{background:var(--color-background-info);color:var(--color-text-info)}
+.ub:first-child{border-right:.5px solid var(--color-border-tertiary)}
+.qi{font-size:12px;color:var(--color-text-secondary);margin-top:-2px;font-style:italic}
+.rbtn{background:var(--color-background-info);color:var(--color-text-info);border:none;border-radius:8px;padding:9px;font-size:14px;font-weight:500;cursor:pointer;width:100%;font-family:var(--font-sans)}
+.rbtn:hover{opacity:.85}
+</style>
+</head>
+<body>
+<div id="wrap">
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;border-bottom:.5px solid var(--color-border-tertiary);padding-bottom:9px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <svg width="36" height="32" viewBox="0 0 36 32" fill="none" aria-hidden="true">
+      <line x1="2" y1="9" x2="34" y2="17" stroke="var(--color-text-secondary)" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M2 9 L2 24 L20 28 L20 13 Z" fill="var(--color-text-info)" opacity=".28"/>
+      <line x1="20" y1="13" x2="28" y2="15.2" stroke="var(--color-text-info)" stroke-width="2.2" stroke-linecap="round"/>
+      <polygon points="28,15.2 24.5,12.8 24.5,17.6" fill="var(--color-text-info)"/>
+      <line x1="6" y1="23" x2="6" y2="28" stroke="var(--color-text-info)" stroke-width="1.4" stroke-linecap="round" opacity=".7"/>
+      <line x1="11" y1="24.5" x2="11" y2="29.5" stroke="var(--color-text-info)" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>
+      <line x1="16" y1="26" x2="16" y2="31" stroke="var(--color-text-info)" stroke-width="1.4" stroke-linecap="round" opacity=".4"/>
+    </svg>
+    <div>
+      <div style="font-size:16px;font-weight:600;color:var(--color-text-primary);line-height:1.2">IrriSim</div>
+      <div style="font-size:11px;color:var(--color-text-secondary);letter-spacing:.03em">Surface irrigation design tool</div>
+    </div>
+  </div>
+  <div class="utog" style="width:100px">
+    <button class="ub on" id="bSI" onclick="setU('SI')">SI</button>
+    <button class="ub" id="bUS" onclick="setU('US')">US</button>
+  </div>
+</div>
+
+<div class="row">
+<div class="cp">
+  <div>
+    <div class="rw"><label class="sl" for="sSoil">Soil texture (USDA)</label></div>
+    <select id="sSoil" style="width:100%;font-size:13px">
+      <option value="clay" selected>Clay</option><option value="siltyClay">Silty clay</option>
+      <option value="siltyClayLoam">Silty clay loam</option><option value="sandyClay">Sandy clay</option>
+      <option value="clayLoam">Clay loam</option><option value="sandyClayLoam">Sandy clay loam</option>
+      <option value="silt">Silt</option><option value="siltLoam">Silt loam</option>
+      <option value="loam">Loam</option><option value="sandyLoam">Sandy loam</option>
+      <option value="loamySand">Loamy sand</option><option value="sand">Sand</option>
+    </select>
+  </div>
+  <button class="abt" id="accB" onclick="toggleAcc()">Kostiakov–Lewis params <span id="accI" style="transition:transform .2s;display:inline-block">▾</span></button>
+  <div class="ac" id="accD">
+    <div style="height:5px"></div>
+    <div class="rw"><label class="sl" for="sK">k</label><span class="sv" id="vK">1.5 mm/minᵃ</span></div>
+    <input type="range" id="sK" min="0.2" max="50" step="0.1" value="1.5">
+    <div style="height:3px"></div>
+    <div class="rw"><label class="sl" for="sA">exponent a</label><span class="sv" id="vA">0.25</span></div>
+    <input type="range" id="sA" min="0.10" max="0.90" step="0.01" value="0.25">
+    <div style="height:3px"></div>
+    <div class="rw"><label class="sl" for="sF0">f₀</label><span class="sv" id="vF0">0.15 mm/min</span></div>
+    <input type="range" id="sF0" min="0.02" max="8.0" step="0.02" value="0.15">
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="sl" style="white-space:nowrap">Border end</span>
+    <div class="et" style="flex:1">
+      <button class="eb on" id="bOpen" onclick="setEnd('open')" disabled>Open</button>
+      <button class="eb" id="bClosed" onclick="setEnd('closed')">Closed</button>
+    </div>
+  </div>
+  <div class="sep">Field geometry</div>
+  <div><div class="rw"><label class="sl" for="sSlope">Slope</label><span class="sv" id="vSlope">0.50%</span></div><input type="range" id="sSlope" min="0" max="2" step="0.05" value="0.5"></div>
+  <div><div class="rw"><label class="sl" for="sW">Border width</label><span class="sv" id="vW">10 m</span></div><input type="range" id="sW" min="1" max="50" step="1" value="10"></div>
+  <div><div class="rw"><label class="sl" for="sBH">Border height</label><span class="sv" id="vBH">0.20 m</span></div><input type="range" id="sBH" min="0.05" max="0.80" step="0.05" value="0.20"></div>
+  <div><div class="rw"><label class="sl" for="sL">Field length</label><span class="sv" id="vL">200 m</span></div><input type="range" id="sL" min="20" max="500" step="10" value="200"></div>
+  <div class="sep">Discharge &amp; timing</div>
+  <div><div class="rw"><label class="sl" for="sQ">Total discharge</label><span class="sv" id="vQ">60 m³/h</span></div><input type="range" id="sQ" min="1" max="600" step="1" value="60"></div>
+  <div class="qi" id="qI">q = 6.0 m³/h·m per unit width</div>
+  <div><div class="rw"><label class="sl" for="sZreq">Target depth</label><span class="sv" id="vZreq">60 mm</span></div><input type="range" id="sZreq" min="10" max="300" step="5" value="60"></div>
+  <div><div class="rw"><label class="sl" for="sTco">Cutoff time</label><span class="sv" id="vTco">120 min</span></div><input type="range" id="sTco" min="10" max="480" step="5" value="120"></div>
+  <div><div class="rw"><label class="sl" for="sSpd">Animation speed</label><span class="sv" id="vSpd">30 min/s</span></div><input type="range" id="sSpd" min="5" max="200" step="5" value="30"></div>
+  <button class="rbtn" id="bRun" onclick="handleRun()">&#9654; Run simulation</button>
+  <div style="font-size:11px;color:var(--color-text-secondary);line-height:1.9;border-top:.5px solid var(--color-border-tertiary);padding-top:5px">Z = k·τ<sup>a</sup>+f₀·τ &nbsp;·&nbsp; Lewis–Milne advance &nbsp;·&nbsp; Kinematic wave recession</div>
+</div>
+<div class="cc">
+  <canvas id="fC" style="width:100%;height:370px;display:block"></canvas>
+  <div class="co"><span class="ctd" id="tD">t = 0 min</span><span class="ph pc" id="pD">Ready</span></div>
+</div>
+</div>
+
+<div class="mg">
+  <div class="mc"><div class="mll">Distribution uniformity</div><div class="mv" id="mDU">—</div><div class="mu">DU<sub>LQ</sub> (%)</div><div id="qDU"></div></div>
+  <div class="mc"><div class="mll">Christiansen CU</div><div class="mv" id="mCU">—</div><div class="mu">CU (%)</div><div id="qCU"></div></div>
+  <div class="mc"><div class="mll">Application efficiency</div><div class="mv" id="mEa">—</div><div class="mu">Ea (%)</div><div id="qEa"></div></div>
+  <div class="mc"><div class="mll">Avg / LQ depth</div><div class="mv" id="mZZ">—</div><div class="mu" id="mZZu">mm</div></div>
+</div>
+<div class="mg5">
+  <div class="mc"><div class="mll">Deep percolation</div><div class="mv" id="mDP">—</div><div class="mu" id="mDPu">mm</div></div>
+  <div class="mc"><div class="mll">Tailwater runoff</div><div class="mv" id="mTW">—</div><div class="mu" id="mTWu">mm</div></div>
+  <div class="mc" id="mcSO"><div class="mll">Side overflow</div><div class="mv" id="mSO">—</div><div class="mu" id="mSOu">mm</div></div>
+  <div class="mc" id="mcTO"><div class="mll">End overflow</div><div class="mv" id="mTO">—</div><div class="mu" id="mTOu">mm</div></div>
+  <div class="mc"><div class="mll">Rec. cutoff time</div><div class="mv" id="mTR">—</div><div class="mu">min</div></div>
+</div>
+<div style="font-size:11px;color:var(--color-text-secondary);margin:-4px 0 8px;display:flex;gap:16px;flex-wrap:wrap">
+  <span id="optQLine">Optimal discharge: —</span>
+  <span id="volBal">Volume balance: —</span>
+</div>
+
+<div style="margin-bottom:8px"><div class="ct">Water surface profile</div><div style="position:relative;height:160px"><canvas id="wpC"></canvas></div></div>
+<div class="ch2">
+  <div><div class="ct">Time-space diagram</div><div style="position:relative;height:195px"><canvas id="tsC"></canvas></div></div>
+  <div><div class="ct">Infiltration distribution Z(x)</div><div style="position:relative;height:195px"><canvas id="zC"></canvas></div></div>
+</div>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--color-text-secondary);padding-top:4px">
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:#4494CC;display:inline-block"></span>Advance</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;border-top:2px dashed #8868CC;display:inline-block"></span>Filling stage</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;border-top:2px dashed #E08040;display:inline-block"></span>Recession</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:16px;height:2px;background:#CC3020;display:inline-block"></span>Cutoff Tco</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(80,158,90,.8);border-radius:2px;display:inline-block"></span>Z≥target</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(200,130,50,.8);border-radius:2px;display:inline-block"></span>Z&lt;target</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(100,180,215,.85);border-radius:2px;display:inline-block"></span>Lowest 25%</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(220,80,20,.5);border-radius:2px;display:inline-block"></span>Side overflow</span>
+  <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(20,90,200,.5);border-radius:2px;display:inline-block"></span>End overflow</span>
+</div>
+
+</div><!-- #wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const SOILS={
+  clay:{k:1.5,a:.25,f0:.15,nM:.15},siltyClay:{k:2.0,a:.30,f0:.18,nM:.14},
+  siltyClayLoam:{k:3.0,a:.35,f0:.22,nM:.13},sandyClay:{k:4.0,a:.40,f0:.30,nM:.12},
+  clayLoam:{k:4.5,a:.40,f0:.32,nM:.12},sandyClayLoam:{k:7.0,a:.48,f0:.50,nM:.10},
+  silt:{k:7.0,a:.50,f0:.40,nM:.09},siltLoam:{k:10.0,a:.55,f0:.55,nM:.10},
+  loam:{k:7.0,a:.50,f0:.50,nM:.10},sandyLoam:{k:14.0,a:.60,f0:1.0,nM:.08},
+  loamySand:{k:22.0,a:.65,f0:2.0,nM:.07},sand:{k:30.0,a:.70,f0:3.0,nM:.06}
+};
+const NS=80;
+let SYS='SI',endOpen=true,accOpen=false,simRes=null,tsChart=null,zChart=null;
+let anim={run:false,t:0,raf:null};
+const fc=document.getElementById('fC'),cx=fc.getContext('2d');
+
+function getP(){
+  const st=document.getElementById('sSoil').value,s=SOILS[st];
+  const W=+document.getElementById('sW').value,Q=+document.getElementById('sQ').value;
+  return{soilType:st,k:+document.getElementById('sK').value,a:+document.getElementById('sA').value,
+    f0:+document.getElementById('sF0').value,nM:s.nM,
+    S:Math.max(+document.getElementById('sSlope').value/100,5e-5),
+    W,Q_total:Q,q:Q/W,L:+document.getElementById('sL').value,
+    bH:+document.getElementById('sBH').value,
+    Zreq:+document.getElementById('sZreq').value,Tco:+document.getElementById('sTco').value,openEnd:endOpen};
+}
+function solveNR(Qm,sy,y0,sz,km,f0m,a,x,t0){
+  if(Qm<=sz*x*f0m*1.0001)return Infinity;
+  let t=Math.max(t0||1,.5);
+  for(let i=0;i<100;i++){
+    if(!isFinite(t)||t>15000)return Infinity;
+    const ft=Qm*t-sy*y0*x-sz*x*(km*Math.pow(t,a)+f0m*t);
+    const dft=Qm-sz*x*(a*km*Math.pow(t,a-1)+f0m);
+    if(Math.abs(dft)<1e-14)break;
+    const dt=-ft/dft;t=Math.max(.001,t+dt);
+    if(t>15000)return Infinity;
+    if(Math.abs(dt)<.0005)break;
+  }
+  return(!isFinite(t)||t>14999)?Infinity:t;
+}
+function solveTau(Zt,k,a,f0,t0){
+  if(Zt<=0)return 0;
+  let t=Math.max(.5,t0||10);
+  for(let i=0;i<100;i++){
+    const Zc=k*Math.pow(t,a)+f0*t,dZ=a*k*Math.pow(t,a-1)+f0;
+    if(dZ<1e-14)break;
+    const dt=-(Zc-Zt)/dZ;t=Math.max(.01,t+dt);
+    if(Math.abs(dt)<.002)break;
+  }
+  return t;
+}
+function qMaxAtBH(nM,bH,S){return(1/nM)*Math.pow(bH,5/3)*Math.sqrt(S)*3600;}
+function compute(p,fast){
+  const{k,a,f0,nM,S,q,L,Tco,Zreq,openEnd,bH}=p;
+  // Full discharge drives all advance/recession physics.
+  // Overflow is a LATERAL loss (over the bund) that occurs when normal depth y0 > bH.
+  // It is independent of tailwater at the tail end.
+  const Qmps=q/3600,Qmpm=q/60;
+  const y0=Math.pow(nM*Qmps/Math.sqrt(S),.6);
+  const q_max=qMaxAtBH(nM,bH,S);
+  // Overflow condition: normal depth exceeds border height (side bund overflow during advance)
+  const q_ov=y0>bH?Math.max(0,q-q_max):0;
+  let V_sideOv=(q_ov/60)*Tco;  // lateral side-bund overflow during advance
+  let V_tailOv=0;               // end-of-border tailwater overflow (filling stage)
+  const sy=.77,sz=(1+a)/2,km=k/1e3,f0m=f0/1e3;
+  const tA=new Array(NS+1).fill(0);
+  for(let i=1;i<=NS;i++){
+    if(!isFinite(tA[i-1])){tA[i]=Infinity;continue;}
+    tA[i]=solveNR(Qmpm,sy,y0,sz,km,f0m,a,(i/NS)*L,tA[i-1]+.05);
+  }
+  const vR=Math.max(.3,(5/3)/nM*Math.pow(y0,2/3)*Math.sqrt(S)*60);
+  const tR=new Array(NS+1);
+  for(let i=0;i<=NS;i++)tR[i]=isFinite(tA[i])?Tco+((i/NS)*L)/vR:Infinity;
+  const Zo=new Array(NS+1).fill(0);
+  for(let i=0;i<=NS;i++){
+    if(!isFinite(tA[i])||!isFinite(tR[i]))continue;
+    const tau=Math.max(0,tR[i]-tA[i]);
+    Zo[i]=tau>0?k*Math.pow(tau,a)+f0*tau:0;
+  }
+  let VTW=0;
+  const tAe=tA[NS];
+  if(!fast&&isFinite(tAe)&&tAe<Tco){
+    const dx=L/NS,dt=.5;
+    for(let t=tAe+dt;t<=Tco;t+=dt){
+      let Qi=0;
+      for(let i=1;i<=NS;i++){
+        if(!isFinite(tA[i])||tA[i]>t)continue;
+        const tau=Math.max(t-tA[i],.01);
+        Qi+=(a*k*Math.pow(tau,a-1)+f0)*dx/1e3;
+      }
+      VTW+=Math.max(0,Qmpm-Qi)*dt;
+    }
+  }
+  const Z=[...Zo],tRf=[...tR];
+  if(!fast&&!openEnd&&VTW>0){
+    for(let i=1;i<=NS;i++){
+      if(!isFinite(tA[i]))continue;
+      const xi=i/NS,dZ=VTW*2000*xi/L;
+      const tn=solveTau(Zo[i]+dZ,k,a,f0,tRf[i]-tA[i]);
+      tRf[i]=tA[i]+tn;Z[i]=k*Math.pow(tn,a)+f0*tn;
+    }
+  }
+  const Zv=Z.slice(1).filter(z=>isFinite(z)&&z>=0);
+  const Zavg=Zv.length?Zv.reduce((s,v)=>s+v)/Zv.length:0;
+  const Zs=[...Zv].sort((a,b)=>a-b);
+  const nLQ=Math.max(1,Math.floor(Zv.length*.25));
+  const Zlq=Zs.slice(0,nLQ).reduce((s,v)=>s+v)/nLQ;
+  const DU=Zavg>0?Math.min(100,Zlq/Zavg*100):0;
+  const MAD=Zavg>0?Zv.reduce((s,v)=>s+Math.abs(v-Zavg),0)/Zv.length:0;
+  const CU=Zavg>0?Math.min(100,(1-MAD/Zavg)*100):0;
+  let tAdvEnd=0;
+  for(let i=0;i<=NS;i++)if(isFinite(tA[i]))tAdvEnd=tA[i];
+  // Filling-stage overflow: closed-end border, water level rises above bH during filling
+  // Compute surface water volume at cutoff, check if it exceeds bH
+  if(!openEnd&&isFinite(tAdvEnd)&&tAdvEnd<Tco){
+    const dxf=L/NS;
+    const Vin_co=(q/60)*Tco;
+    let Vinf_co=0;
+    for(let i=0;i<NS;i++){
+      const tau=Math.max(0,Tco-tA[i]);
+      if(tau<.001)continue;
+      Vinf_co+=(k*Math.pow(tau,a)+f0*tau)/1e3*dxf;
+    }
+    const yAvg_co=Math.max(0,Vin_co-Vinf_co)/L;
+    // Sloped: tail depth ≈ 2.2× avg (water piles at low end); basin: uniform
+    const yTail_co=S<1e-5?yAvg_co:Math.min(2.2*yAvg_co,yAvg_co+S*L);
+    if(yTail_co>bH){
+      // Volume spilled above bH: triangular profile for sloped, uniform for basin
+      V_tailOv=S<1e-5?Math.max(0,yAvg_co-bH)*L:Math.max(0,yTail_co-bH)*L/2;
+    }
+  }
+  const V_ov=V_sideOv+V_tailOv;
+  const tRmax=tRf.filter(v=>isFinite(v)).reduce((m,v)=>Math.max(m,v),0)||Tco+50;
+  return{tA,tR:tRf,Z,Zv,Zavg,Zlq,DU,CU,y0,vR,tAdvEnd,tEnd:tRmax+5,N:NS,
+    VTW,V_ov,V_sideOv,V_tailOv,q,q_ov,q_max,k,a,f0,S,L,W:p.W,bH:bH||.2,Tco,Zreq,nM,openEnd};
+}
+// Live metrics at animation time t (called each frame)
+function computeEffAtT(r,t){
+  if(!r||t<=0)return null;
+  const{L,Tco,Zreq,q,openEnd,k,a,f0,S,bH,N,tAdvEnd,q_ov,nM}=r;
+  const dx=L/N;
+  // Applied water up to now (inflow stops at Tco)
+  const V_app=Math.max(0,(q/60)*Math.min(t,Tco));
+  if(V_app<0.001)return null;
+  // Current infiltration profile
+  let Vb=0,Vd=0,Vinf=0;
+  const Zt=[];
+  for(let i=1;i<=N;i++){
+    const z=cZ(i,t,r);
+    Zt.push(z);
+    Vb+=Math.min(z,Zreq)*dx/1e3;
+    Vd+=Math.max(0,z-Zreq)*dx/1e3;
+    Vinf+=z*dx/1e3;
+  }
+  // Efficiency: beneficial / applied
+  const Ea=Math.min(100,Vb/V_app*100);
+  // Deep percolation
+  const DPmm=Vd/L*1e3,DPpct=Math.min(100,Vd/V_app*100);
+  // Distribution uniformity (LQ) at time t
+  const Zs=[...Zt].sort((a,b)=>a-b);
+  const nLQ=Math.max(1,Math.floor(Zt.length*.25));
+  const Zavg=Zt.reduce((s,v)=>s+v,0)/Zt.length;
+  const Zlq=Zs.slice(0,nLQ).reduce((s,v)=>s+v,0)/nLQ;
+  const DUt=Zavg>0?Math.min(100,Zlq/Zavg*100):0;
+  const MAD=Zavg>0?Zt.reduce((s,v)=>s+Math.abs(v-Zavg),0)/Zt.length:0;
+  const CUt=Zavg>0?Math.min(100,(1-MAD/Zavg)*100):0;
+  // Tailwater runoff up to t (open-end only: volume that exited past tail before t)
+  let VTWt=0;
+  if(openEnd&&isFinite(tAdvEnd)&&tAdvEnd<t&&t>Tco){
+    const dt=.5,tStart=Math.max(Tco,tAdvEnd);
+    for(let ti=tStart+dt;ti<=t;ti+=dt){
+      let Qi=0;
+      for(let i=1;i<=N;i++){
+        if(!isFinite(r.tA[i])||r.tA[i]>ti)continue;
+        const tau=Math.max(ti-r.tA[i],.01);
+        Qi+=(a*k*Math.pow(tau,a-1)+f0)*dx/1e3;
+      }
+      VTWt+=Math.max(0,(q/60)-Qi)*dt;
+    }
+  }
+  const TWmm=openEnd?VTWt/L*1e3:0,TWpct=Math.min(100,(openEnd?VTWt:0)/V_app*100);
+  // Side overflow (lateral, during advance; proportional to time so far)
+  const tSide=Math.min(t,Tco);
+  const V_sideOv=(q_ov/60)*tSide;
+  const SOMm=V_sideOv/L*1e3,SOpct=Math.min(100,V_sideOv/V_app*100);
+  // End overflow (filling stage) at time t
+  let V_tailOv=0;
+  if(!openEnd&&isFinite(tAdvEnd)&&t>=tAdvEnd&&t<=Tco){
+    const dxf=L/N,Vin_t=(q/60)*t;
+    let Vinf_t=0;
+    for(let i=0;i<N;i++){
+      const tau=Math.max(0,t-(r.tA[i]||0));
+      if(tau<.001)continue;
+      Vinf_t+=(k*Math.pow(tau,a)+f0*tau)/1e3*dxf;
+    }
+    const yAvg_t=Math.max(0,Vin_t-Vinf_t)/L;
+    const yTail_t=S<1e-5?yAvg_t:Math.min(2.2*yAvg_t,yAvg_t+S*L);
+    if(yTail_t>bH){
+      V_tailOv=S<1e-5?Math.max(0,yAvg_t-bH)*L:Math.max(0,yTail_t-bH)*L/2;
+    }
+  } else if(!openEnd&&isFinite(tAdvEnd)&&t>Tco){
+    // After cutoff use precomputed final value
+    V_tailOv=r.V_tailOv||0;
+  }
+  const TOMm=V_tailOv/L*1e3,TOpct=Math.min(100,V_tailOv/V_app*100);
+  return{Ea,DPmm,DPpct,TWmm,TWpct,SOMm,SOpct,TOMm,TOpct,DUt,CUt,Zavg,Zlq,V_app};
+}
+function updMetricsLive(r,t){
+  const e=computeEffAtT(r,t);
+  if(!e)return;
+  const zu=SYS==='SI'?'mm':'in',conv=SYS==='SI'?1:.03937,f=v=>v.toFixed(1);
+  document.getElementById('mDU').textContent=f(e.DUt);
+  document.getElementById('mCU').textContent=f(e.CUt);
+  document.getElementById('mEa').textContent=f(e.Ea);
+  document.getElementById('mZZ').textContent=`${(e.Zavg*conv).toFixed(SYS==='SI'?0:2)} / ${(e.Zlq*conv).toFixed(SYS==='SI'?0:2)}`;
+  document.getElementById('mDP').textContent=(e.DPmm*conv).toFixed(SYS==='SI'?1:3);
+  document.getElementById('mDPu').textContent=`${zu} (${e.DPpct.toFixed(0)}% V)`;
+  document.getElementById('mTW').textContent=(e.TWmm*conv).toFixed(SYS==='SI'?1:3);
+  document.getElementById('mTWu').textContent=`${zu} (${e.TWpct.toFixed(0)}% V)`;
+  const soOn=e.SOMm>0.01;document.getElementById('mcSO').classList.toggle('ov',soOn);
+  document.getElementById('mSO').textContent=(e.SOMm*conv).toFixed(SYS==='SI'?1:3);
+  document.getElementById('mSOu').textContent=`${zu} (${e.SOpct.toFixed(0)}% V)`;
+  const toOn=e.TOMm>0.01;document.getElementById('mcTO').classList.toggle('ov',toOn);
+  document.getElementById('mTO').textContent=(e.TOMm*conv).toFixed(SYS==='SI'?1:3);
+  document.getElementById('mTOu').textContent=`${zu} (${e.TOpct.toFixed(0)}% V)`;
+  document.getElementById('qDU').innerHTML=qual(e.DUt,80,65);
+  document.getElementById('qCU').innerHTML=qual(e.CUt,80,65);
+  document.getElementById('qEa').innerHTML=qual(e.Ea,75,55);
+}
+function computeEff(r){
+  const{L,Tco,Zreq,q,openEnd,VTW,V_ov,V_sideOv,V_tailOv}=r;
+  const V_app=(q/60)*Tco,dx=L/r.N;
+  let Vb=0,Vd=0;
+  for(let i=1;i<=r.N;i++){Vb+=Math.min(r.Z[i],Zreq)*dx/1e3;Vd+=Math.max(0,r.Z[i]-Zreq)*dx/1e3;}
+  const vtw=openEnd?VTW:0,Ea=V_app>0?Math.min(100,Vb/V_app*100):0;
+  const SOMm=(V_sideOv||0)/L*1e3,SOpct=V_app>0?Math.min(100,(V_sideOv||0)/V_app*100):0;
+  const TOMm=(V_tailOv||0)/L*1e3,TOpct=V_app>0?Math.min(100,(V_tailOv||0)/V_app*100):0;
+  const OVmm=(V_ov||0)/L*1e3,OVpct=V_app>0?Math.min(100,(V_ov||0)/V_app*100):0;
+  return{Ea,DPmm:Vd/L*1e3,DPpct:V_app>0?Math.min(100,Vd/V_app*100):0,
+    TWmm:vtw/L*1e3,TWpct:V_app>0?Math.min(100,vtw/V_app*100):0,
+    OVmm,OVpct,SOMm,SOpct,TOMm,TOpct,V_app,Vb,Vd,vtw};
+}
+function findTcoRec(r){
+  if(!isFinite(r.tA[r.N]))return null;
+  const tr=solveTau(r.Zreq,r.k,r.a,r.f0,30);
+  if(!isFinite(tr)||tr<=0)return null;
+  const raw=r.tA[r.N]+tr-r.L/r.vR;
+  return Math.max(Math.ceil(r.tA[r.N]),Math.round(raw));
+}
+function findOptQ(p){
+  let best={Q:p.Q_total,Ea:-1};
+  for(let i=1;i<=28;i++){
+    const Qt=1+(i/28)*599,qv=Qt/p.W;
+    try{
+      const r=compute({...p,Q_total:Qt,q:qv},true);
+      const V_app=(qv/60)*p.Tco,dx=p.L/NS;
+      let Vb=0;
+      for(let j=1;j<=NS;j++)Vb+=Math.min(r.Z[j],p.Zreq)*dx/1e3;
+      const Ea=V_app>0?Math.min(100,Vb/V_app*100):0;
+      if(Ea>best.Ea)best={Q:Qt,Ea};
+    }catch(e){}
+  }
+  return{Q:Math.round(best.Q),Ea:best.Ea};
+}
+function cZ(i,t,r){
+  if(!r||i<0||i>r.N||!isFinite(r.tA[i])||t<r.tA[i])return 0;
+  const tau=Math.min(t,isFinite(r.tR[i])?r.tR[i]:t)-r.tA[i];
+  return tau>0?r.k*Math.pow(Math.max(tau,.01),r.a)+r.f0*tau:0;
+}
+function cAdv(t,r){let x=0;for(let i=1;i<=r.N;i++){if(isFinite(r.tA[i])&&r.tA[i]<=t)x=(i/r.N)*r.L;else break;}return Math.min(x,r.L);}
+function cRec(t,r){if(t<=r.Tco)return 0;let x=0;for(let i=1;i<=r.N;i++){if(isFinite(r.tR[i])&&r.tR[i]<=t)x=(i/r.N)*r.L;else break;}return x;}
+
+function yFillDepth(t,r){
+  // Ponded water depth during closed-end filling stage (m)
+  // S=0 basin: uniform depth everywhere; S>0 sloped: tail depth ≈ 2× average
+  if(!r||r.openEnd||!isFinite(r.tAdvEnd)||t<r.tAdvEnd)return r?r.y0:0;
+  const tF=Math.min(t,r.Tco),dx=r.L/r.N;
+  const Vin=(r.q/60)*tF; // m²/m width total inflow
+  let Vinf=0;
+  for(let i=0;i<r.N;i++){
+    const tau=Math.max(0,tF-(r.tA[i]||0));
+    if(tau<.001)continue;
+    Vinf+=(r.k*Math.pow(tau,r.a)+r.f0*tau)/1000*dx; // m
+  }
+  const yAvg=Math.max(0,Vin-Vinf)/r.L;
+  return r.S<1e-5?yAvg:Math.min(2.2*yAvg,yAvg+r.S*r.L);
+}
+function drawField(t,r){
+  const dpr=window.devicePixelRatio||1,W=fc.offsetWidth||440,H=370;
+  fc.width=W*dpr;fc.height=H*dpr;cx.scale(dpr,dpr);
+  const ML=50,MR=14,MT=38,MB=22,fW=W-ML-MR,fH=H-MT-MB;
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const maxZmm=Math.max(r.Zavg*2.5||100,r.Zreq*1.8||80,60);
+  const soilZH=fH*.68,mmPx=maxZmm/soilZH;
+  const bH_m=r.bH||.2,bH_px=Math.min(soilZH*.45,bH_m*1000/mmPx);
+  // Water depth: rises during filling stage in closed-end border
+  let yDepth=r.y0;
+  if(!r.openEnd&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.Tco){
+    const yF=yFillDepth(t,r);yDepth=Math.max(r.y0,yF);
+  }
+  const wPx=Math.min(bH_px,Math.max(4,yDepth*1000/mmPx));
+  const airH=fH*.32-bH_px;
+  const slPx=Math.min(26,r.S*fW*5);
+  const syFn=xi=>MT+airH+bH_px+xi*slPx;
+  const pxFn=xi=>ML+xi*fW;
+  const overflowing=r.q_ov>0;
+  // fillOvfl: water depth has risen above bH during filling stage
+  const fillOvfl=!r.openEnd&&yDepth>r.bH&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<r.Tco;
+  cx.fillStyle=dk?'#1a2a38':'#c0dded';cx.fillRect(0,0,W,H);
+  cx.beginPath();cx.moveTo(pxFn(0),syFn(0));cx.lineTo(pxFn(1),syFn(1));cx.lineTo(pxFn(1),syFn(1)+soilZH);cx.lineTo(pxFn(0),syFn(0)+soilZH);cx.closePath();
+  const sg=cx.createLinearGradient(0,syFn(0),0,syFn(0)+soilZH);
+  sg.addColorStop(0,dk?'#5a3820':'#8a5830');sg.addColorStop(.4,dk?'#3a2010':'#5a3810');sg.addColorStop(1,dk?'#1a0e08':'#362010');
+  cx.fillStyle=sg;cx.fill();
+  for(let i=0;i<NS;i++){
+    const xi=i/NS,Zh=cZ(Math.min(r.N,Math.round(xi*r.N)),t,r);
+    if(Zh<.3)continue;
+    const fr=Math.min(1,Zh/maxZmm),wd=fr*soilZH*.88;
+    cx.fillStyle=`rgba(${dk?'60,155,90':'55,148,82'},${.22+fr*.45})`;
+    cx.fillRect(pxFn(xi),syFn(xi),pxFn((i+1)/NS)-pxFn(xi)+1,wd);
+  }
+  const xAdv=cAdv(t,r),xRec=cRec(t,r);
+  if(xAdv>xRec+.5){
+    for(let i=0;i<NS;i++){
+      const xi=i/NS,xp=xi*r.L;
+      if(xp<xRec||xp>xAdv)continue;
+      const yT=syFn(xi)-wPx;
+      const wg=cx.createLinearGradient(0,yT,0,yT+wPx);
+      wg.addColorStop(0,'rgba(68,148,220,.38)');wg.addColorStop(1,'rgba(20,88,196,.64)');
+      cx.fillStyle=wg;cx.fillRect(pxFn(xi),yT,pxFn((i+1)/NS)-pxFn(xi)+1,wPx+1);
+    }
+    if(overflowing&&t>0&&xAdv>0){
+      for(let i=0;i<NS;i++){
+        const xi=i/NS,xp=xi*r.L;
+        if(xp>xAdv||xp<xRec)continue;
+        cx.fillStyle='rgba(220,80,20,.22)';
+        cx.fillRect(pxFn(xi),syFn(xi)-bH_px-3,pxFn((i+1)/NS)-pxFn(xi)+1,3);
+      }
+    }
+    if(xAdv<r.L-.5){
+      const xiA=xAdv/r.L,pA=pxFn(xiA);
+      cx.strokeStyle='#1060C0';cx.lineWidth=2;cx.setLineDash([]);
+      cx.beginPath();cx.moveTo(pA,syFn(xiA)-wPx-8);cx.lineTo(pA,syFn(xiA)+9);cx.stroke();
+      cx.fillStyle='#1060C0';cx.beginPath();cx.moveTo(pA,syFn(xiA)-wPx-8);cx.lineTo(pA-5,syFn(xiA)-wPx);cx.lineTo(pA+5,syFn(xiA)-wPx);cx.fill();
+    }
+    if(xRec>.5&&t>r.Tco){
+      const xiR=xRec/r.L,pR=pxFn(xiR);
+      cx.strokeStyle='#B06020';cx.lineWidth=1.5;cx.setLineDash([5,3]);
+      cx.beginPath();cx.moveTo(pR,syFn(xiR)-wPx-5);cx.lineTo(pR,syFn(xiR)+8);cx.stroke();cx.setLineDash([]);
+    }
+  }
+  if(overflowing&&t>0&&t<r.Tco){
+    const oy=syFn(0)-bH_px;
+    cx.strokeStyle='rgba(220,80,20,.75)';cx.lineWidth=1.5;cx.setLineDash([]);
+    for(let j=0;j<3;j++){const yy=oy-1+j*4.5;cx.beginPath();cx.moveTo(ML,yy);cx.lineTo(ML-10,yy);cx.stroke();cx.fillStyle='rgba(220,80,20,.75)';cx.beginPath();cx.moveTo(ML-10,yy);cx.lineTo(ML-7,yy-2.5);cx.lineTo(ML-7,yy+2.5);cx.fill();}
+    const qd=SYS==='SI'?r.q_ov.toFixed(1)+' m³/h·m':(r.q_ov*10.764).toFixed(0)+' ft³/h·ft';
+    cx.fillStyle='#CC4010';cx.font='bold 11px sans-serif';cx.textAlign='left';cx.fillText('⚠ side overflow '+qd,ML+3,oy-5);
+  }
+  // Basin (S≈0): filling overflow spills from head bund as well as tail
+  if(fillOvfl&&r.S<1e-5){
+    const oy=syFn(0)-bH_px;
+    cx.strokeStyle='rgba(20,90,200,.75)';cx.lineWidth=1.5;cx.setLineDash([]);
+    for(let j=0;j<3;j++){const yy=oy-1+j*5;cx.beginPath();cx.moveTo(ML,yy);cx.lineTo(ML-12,yy);cx.stroke();cx.fillStyle='rgba(20,90,200,.75)';cx.beginPath();cx.moveTo(ML-12,yy);cx.lineTo(ML-8,yy-3);cx.lineTo(ML-8,yy+3);cx.closePath();cx.fill();}
+    cx.fillStyle='#1060C0';cx.font='bold 10px sans-serif';cx.textAlign='right';cx.fillText('spill',ML-14,oy+6);
+  }
+  cx.strokeStyle=dk?'rgba(200,150,80,.5)':'rgba(100,60,20,.4)';cx.lineWidth=1.2;cx.setLineDash([5,4]);
+  cx.beginPath();cx.moveTo(pxFn(0),syFn(0)-bH_px);cx.lineTo(pxFn(1),syFn(1)-bH_px);cx.stroke();cx.setLineDash([]);
+  cx.strokeStyle=dk?'rgba(200,150,80,.7)':'rgba(100,60,20,.6)';cx.lineWidth=1.5;
+  cx.beginPath();cx.moveTo(pxFn(0)-6,syFn(0)-bH_px);cx.lineTo(pxFn(0)+4,syFn(0)-bH_px);cx.stroke();
+  cx.fillStyle=dk?'#aa8860':'#7a5030';cx.font='10px sans-serif';cx.textAlign='right';
+  cx.fillText(SYS==='SI'?r.bH.toFixed(2)+'m':(r.bH*3.28).toFixed(1)+'ft',pxFn(0)-8,syFn(0)-bH_px-3);
+  cx.strokeStyle=dk?'#8a6040':'#3e1e0a';cx.lineWidth=1.5;cx.setLineDash([]);
+  cx.beginPath();cx.moveTo(pxFn(0),syFn(0));cx.lineTo(pxFn(1),syFn(1));cx.stroke();
+  // Wave / ripple splash when advance front hits the tail end
+  const splashDur=16;
+  if(isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.tAdvEnd+splashDur){
+    const prog=(t-r.tAdvEnd)/splashDur;
+    const pSpl=pxFn(1),ySpl=syFn(1)-wPx*.6;
+    cx.lineWidth=2;
+    for(let k=0;k<3;k++){
+      const ph=((prog*1.4+k/3)%1);
+      const rad=ph*36;
+      const alp=(1-ph)*0.75;
+      cx.strokeStyle=`rgba(40,130,225,${alp.toFixed(2)})`;
+      cx.beginPath();
+      cx.arc(pSpl,ySpl,rad,-Math.PI/2,Math.PI/2);
+      cx.stroke();
+    }
+  }
+  if(!r.openEnd){
+    const pT=pxFn(1),yT=syFn(1)-bH_px,yB=syFn(1)+soilZH*.3;
+    cx.fillStyle=dk?'#886050':'#7a6050';cx.fillRect(pT,yT,8,yB-yT);
+    cx.strokeStyle=dk?'#aa8060':'#5a4030';cx.lineWidth=1;cx.strokeRect(pT,yT,8,yB-yT);
+    for(let y=yT+5;y<yB;y+=6){cx.beginPath();cx.moveTo(pT,y);cx.lineTo(pT+8,y+5);cx.stroke();}
+    cx.fillStyle=dk?'#998':'#887';cx.font='11px sans-serif';cx.textAlign='left';cx.fillText('bund',pT+2,yT-4);
+    // Tail overflow: filling depth exceeds bH (both sloped and basin cases)
+    if(fillOvfl){
+      const oy=yT-1;
+      for(let j=0;j<3;j++){
+        const yy=oy+j*5.5;
+        cx.strokeStyle='rgba(20,90,200,.75)';cx.lineWidth=1.5;
+        cx.beginPath();cx.moveTo(pT+8,yy);cx.lineTo(pT+20,yy);cx.stroke();
+        cx.fillStyle='rgba(20,90,200,.75)';
+        cx.beginPath();cx.moveTo(pT+20,yy);cx.lineTo(pT+16,yy-3);cx.lineTo(pT+16,yy+3);cx.closePath();cx.fill();
+      }
+      cx.fillStyle='#1060C0';cx.font='bold 10px sans-serif';cx.textAlign='left';
+      cx.fillText('end overflow',pT+22,oy+6);
+    }
+  } else if(xAdv>=r.L-.5&&t>r.tAdvEnd){
+    const pT=pxFn(1),yw=syFn(1)-wPx/2;
+    // Animated flow lines with phase offset
+    const phase=(t*0.3)%1;
+    for(let j=0;j<3;j++){
+      const y=yw-4+j*5;
+      const off=((phase+j*0.33)%1);
+      const seg=9*off;
+      cx.strokeStyle=`rgba(20,90,200,${0.3+off*0.4})`;cx.lineWidth=1.5;
+      cx.beginPath();cx.moveTo(pT+seg,y);cx.lineTo(Math.min(pT+seg+6,pT+12),y);cx.stroke();
+      if(off>0.6){cx.fillStyle=`rgba(20,90,200,${(off-0.6)*1.5})`;cx.beginPath();cx.moveTo(pT+9,y);cx.lineTo(pT+5,y-3);cx.lineTo(pT+5,y+3);cx.closePath();cx.fill();}
+    }
+    cx.fillStyle=dk?'#7a8':'#779';cx.font='11px sans-serif';cx.textAlign='left';cx.fillText('runoff',pT+2,syFn(1)-bH_px-4);
+  }
+  if(t<r.Tco&&xAdv<r.L*.12){const ay=syFn(0)-wPx/2;cx.strokeStyle='#1060C0';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(4,ay);cx.lineTo(ML-3,ay);cx.stroke();cx.fillStyle='#1060C0';cx.beginPath();cx.moveTo(ML,ay);cx.lineTo(ML-7,ay-4);cx.lineTo(ML-7,ay+4);cx.fill();}
+  const tc=dk?'#aaa':'#555';cx.font='12px sans-serif';cx.fillStyle=tc;
+  [0,.25,.5,.75,1].forEach(xi=>{const xpx=pxFn(xi),m=Math.round(xi*r.L);cx.textAlign=xi===0?'left':xi===1?'right':'center';cx.fillText(SYS==='SI'?m+'m':Math.round(m*3.28)+'ft',xpx,H-5);cx.strokeStyle='rgba(128,128,128,.08)';cx.lineWidth=.5;cx.beginPath();cx.moveTo(xpx,MT);cx.lineTo(xpx,H-MB);cx.stroke();});
+  cx.font='11px sans-serif';cx.fillStyle=dk?'#888':'#888';
+  cx.textAlign='left';cx.fillText('Head',pxFn(0),MT-10);cx.textAlign='right';cx.fillText('Tail — '+(r.openEnd?'open':'closed'),pxFn(1),MT-10);cx.textAlign='right';cx.fillText('W='+r.W+(SYS==='SI'?'m':'ft'),W-MR,MT+14);
+  const sc=dk?'#888':'#888';cx.strokeStyle=sc;cx.lineWidth=.7;cx.beginPath();cx.moveTo(ML-4,syFn(0));cx.lineTo(ML-4,syFn(0)+soilZH*.88);cx.stroke();
+  [0,.25,.5,.75,1].forEach(fr=>{const y=syFn(0)+fr*soilZH*.88,dep=fr*maxZmm;cx.beginPath();cx.moveTo(ML-8,y);cx.lineTo(ML-4,y);cx.stroke();cx.fillStyle=sc;cx.font='10px sans-serif';cx.textAlign='right';cx.fillText(SYS==='SI'?Math.round(dep):(dep*.03937).toFixed(1),ML-10,y+4);});
+  cx.save();cx.translate(ML-30,syFn(0)+soilZH*.44);cx.rotate(-Math.PI/2);cx.fillStyle=sc;cx.font='10px sans-serif';cx.textAlign='center';cx.fillText(SYS==='SI'?'mm':'in',0,0);cx.restore();
+}
+
+let wpChart=null;
+// Compute water surface depth profile (m above bed) at time t
+function computeWaterProfile(r,t){
+  if(!r||t<=0)return{pts:[],bH_line:[]};
+  const N=r.N,dx=r.L/N,xAdv=cAdv(t,r),xRec=cRec(t,r);
+  const conv=SYS==='SI'?1000:39.37; // m → mm or m → in*1000
+  // Average ponded depth during filling stage (closed-end)
+  let yAvg=0;
+  const inFilling=!r.openEnd&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.Tco;
+  if(inFilling){
+    const tF=Math.min(t,r.Tco),Vin=(r.q/60)*tF;
+    let Vinf=0;
+    for(let i=0;i<N;i++){const tau=Math.max(0,tF-(r.tA[i]||0));if(tau<.001)continue;Vinf+=(r.k*Math.pow(tau,r.a)+r.f0*tau)/1000*dx;}
+    yAvg=Math.max(0,Vin-Vinf)/r.L;
+  }
+  const pts=[],bH_line=[];
+  const nPts=Math.min(N,60); // max 60 points for chart performance
+  const step=Math.max(1,Math.round(N/nPts));
+  for(let i=0;i<=N;i+=step){
+    const x=(i/N)*r.L,xDisp=SYS==='SI'?x:x*3.28084;
+    let y=0;
+    if(inFilling){
+      // Triangular backwater for sloped; uniform for basin
+      y=r.S<1e-5?yAvg:2*yAvg*(x/r.L);
+    } else if(t>r.Tco){
+      // Recession: depth proportional to time remaining until dry
+      if(isFinite(r.tR[i])&&t<r.tR[i]){
+        const recDur=r.tR[i]-r.Tco;
+        y=recDur>0?r.y0*Math.max(0,(r.tR[i]-t)/recDur):0;
+      }
+    } else {
+      // Advance phase: y0 where wetted, 0 elsewhere
+      y=(x<=xAdv+dx)?r.y0:0;
+    }
+    pts.push({x:xDisp,y:+(y*conv).toFixed(1)});
+    bH_line.push({x:xDisp,y:+(r.bH*conv).toFixed(1)});
+  }
+  return{pts,bH_line};
+}
+function updWp(r,t){
+  if(!wpChart||!r)return;
+  const{pts,bH_line}=computeWaterProfile(r,t);
+  wpChart.data.datasets[0].data=pts;
+  wpChart.data.datasets[1].data=bH_line;
+  // Dynamic y-axis max: 1.5× border height or 2× y0, whichever is bigger
+  const conv=SYS==='SI'?1000:39.37;
+  const yMax=Math.max(r.bH*conv*1.6,r.y0*conv*2.2,10);
+  wpChart.options.scales.y.max=+yMax.toFixed(0);
+  wpChart.options.scales.x.max=SYS==='SI'?r.L:+(r.L*3.28084).toFixed(0);
+  wpChart.options.scales.x.title.text=SYS==='SI'?'Distance (m)':'Distance (ft)';
+  wpChart.options.scales.y.title.text=SYS==='SI'?'Depth (mm)':'Depth (in)';
+  wpChart.update('none');
+}
+function initCharts(){
+  if(tsChart){tsChart.destroy();tsChart=null;}if(zChart){zChart.destroy();zChart=null;}
+  if(wpChart){wpChart.destroy();wpChart=null;}
+  const isDk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=isDk?'#9ca3af':'#6b7280',gc=isDk?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
+  const tck={font:{size:11},color:tc},grd={color:gc};
+  tsChart=new Chart(document.getElementById('tsC'),{type:'scatter',data:{datasets:[
+    {label:'Advance',data:[],showLine:true,borderColor:'#4494CC',borderWidth:2,pointRadius:0,tension:.3},
+    {label:'Filling',data:[],showLine:true,borderColor:'#8868CC',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
+    {label:'Recession',data:[],showLine:true,borderColor:'#E08040',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:.2},
+    {label:'Tco',data:[],showLine:true,borderColor:'#CC3020',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
+    {label:'Now',data:[],showLine:true,borderColor:'rgba(255,210,30,0.9)',borderWidth:2,pointRadius:5,pointBackgroundColor:'rgba(255,210,30,0.9)',pointBorderColor:'rgba(170,130,0,.8)',pointBorderWidth:1,tension:0,borderDash:[]}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>{const xl=SYS==='SI'?it.parsed.x.toFixed(0)+' m':Math.round(it.parsed.x*3.28)+' ft';return`${it.dataset.label}: ${xl}, t=${it.parsed.y.toFixed(1)} min`;}}}},scales:{x:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},y:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Time (min)',font:{size:12},color:tc}}},animation:{duration:0}}});
+  zChart=new Chart(document.getElementById('zC'),{type:'bar',data:{labels:[],datasets:[
+    {type:'bar',label:'Z',data:[],backgroundColor:[],borderWidth:0,categoryPercentage:1,barPercentage:.98},
+    {type:'line',label:'Zavg',data:[],borderColor:'#4494CC',borderWidth:1.5,borderDash:[5,4],pointRadius:0},
+    {type:'line',label:'Zreq',data:[],borderColor:'#CC3020',borderWidth:1.5,pointRadius:0},
+    {type:'line',label:'ZLQ',data:[],borderColor:'#E08040',borderWidth:1.5,borderDash:[3,2],pointRadius:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{...tck,maxTicksLimit:9},grid:{display:false},title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},y:{beginAtZero:true,ticks:tck,grid:grd,title:{display:true,text:'Z (mm)',font:{size:12},color:tc}}},animation:{duration:0}}});
+  wpChart=new Chart(document.getElementById('wpC'),{type:'scatter',data:{datasets:[
+    {label:'Water depth',data:[],showLine:true,fill:true,
+     borderColor:'rgba(68,148,204,0.9)',borderWidth:2,pointRadius:0,tension:.35,
+     backgroundColor:'rgba(68,148,204,0.18)'},
+    {label:'Border height',data:[],showLine:true,fill:false,
+     borderColor:'rgba(180,80,20,0.7)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',align:'end',labels:{boxWidth:20,font:{size:11},color:tc,usePointStyle:true,pointStyle:'line'}},
+      tooltip:{callbacks:{label:it=>{const xu=SYS==='SI'?'m':'ft',yu=SYS==='SI'?'mm':'in';return`${it.dataset.label}: ${it.parsed.x.toFixed(0)} ${xu}, ${it.parsed.y.toFixed(1)} ${yu}`;}}}},
+    scales:{
+      x:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},
+      y:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Depth (mm)',font:{size:12},color:tc}}
+    },animation:{duration:0}}});
+}
+
+function updTs(r){
+  if(!tsChart)return;
+  const adv=[],filling=[],rec=[];
+  for(let i=0;i<=r.N;i++){if(!isFinite(r.tA[i])||r.tA[i]>r.Tco)break;adv.push({x:(i/r.N)*r.L,y:r.tA[i]});}
+  if(isFinite(r.tA[r.N])&&r.tA[r.N]<r.Tco){filling.push({x:r.L,y:r.tA[r.N]});filling.push({x:r.L,y:r.Tco});}
+  for(let i=0;i<=r.N;i++){if(!isFinite(r.tR[i]))break;rec.push({x:(i/r.N)*r.L,y:r.tR[i]});}
+  tsChart.data.datasets[0].data=adv;tsChart.data.datasets[1].data=filling;tsChart.data.datasets[2].data=rec;tsChart.data.datasets[3].data=[{x:0,y:r.Tco},{x:r.L,y:r.Tco}];
+  const ym=Math.max(rec.length?rec[rec.length-1].y:r.Tco,r.Tco)*1.08;
+  tsChart.options.scales.x.max=r.L;tsChart.options.scales.y.max=Math.ceil(ym);
+  tsChart.options.scales.x.title.text=SYS==='SI'?'Distance (m)':'Distance (ft)';tsChart.update('none');
+}
+function updZ(r,t){
+  if(!zChart)return;
+  const lbl=[],dat=[],col=[],Zt=[];
+  for(let i=1;i<=r.N;i++)Zt.push(cZ(i,t,r));
+  const Zs=[...Zt].sort((a,b)=>a-b),nLQ=Math.max(1,Math.floor(Zt.length*.25)),lqT=Zs[nLQ-1]+.01;
+  const Za=Zt.reduce((s,z)=>s+z,0)/Zt.length,Zl=Zs.slice(0,nLQ).reduce((s,z)=>s+z,0)/nLQ;
+  const conv=SYS==='SI'?1:.03937;
+  for(let i=0;i<r.N;i++){lbl.push(SYS==='SI'?Math.round(((i+1)/r.N)*r.L):Math.round(((i+1)/r.N)*r.L*3.28));const z=Zt[i];dat.push(+(z*conv).toFixed(SYS==='SI'?1:3));col.push(z<=lqT?'rgba(100,180,215,.85)':z<r.Zreq?'rgba(200,130,50,.8)':'rgba(80,158,90,.8)');}
+  zChart.data.labels=lbl;zChart.data.datasets[0].data=dat;zChart.data.datasets[0].backgroundColor=col;
+  zChart.data.datasets[1].data=Array(r.N).fill(+(Za*conv).toFixed(SYS==='SI'?1:3));
+  zChart.data.datasets[2].data=Array(r.N).fill(+(r.Zreq*conv).toFixed(SYS==='SI'?1:3));
+  zChart.data.datasets[3].data=Array(r.N).fill(+(Zl*conv).toFixed(SYS==='SI'?1:3));
+  zChart.options.scales.y.title.text=SYS==='SI'?'Z (mm)':'Z (in)';zChart.options.scales.x.title.text=SYS==='SI'?'Distance (m)':'Distance (ft)';zChart.update('none');
+}
+function qual(v,hi,mid){return v>=hi?'<span class="mq qg">Good</span>':v>=mid?'<span class="mq qf">Fair</span>':'<span class="mq qp">Poor</span>';}
+function setMetrics(r,eff,opt,tcoRec){
+  const zu=SYS==='SI'?'mm':'in',conv=SYS==='SI'?1:.03937,f=v=>isFinite(v)?v.toFixed(1):'—';
+  document.getElementById('mDU').textContent=f(r.DU);document.getElementById('mCU').textContent=f(r.CU);document.getElementById('mEa').textContent=f(eff.Ea);
+  document.getElementById('mZZ').textContent=`${(r.Zavg*conv).toFixed(SYS==='SI'?0:2)} / ${(r.Zlq*conv).toFixed(SYS==='SI'?0:2)}`;document.getElementById('mZZu').textContent=zu;
+  document.getElementById('mDP').textContent=(eff.DPmm*conv).toFixed(SYS==='SI'?1:3);document.getElementById('mDPu').textContent=`${zu} (${eff.DPpct.toFixed(0)}% V)`;
+  document.getElementById('mTW').textContent=(eff.TWmm*conv).toFixed(SYS==='SI'?1:3);document.getElementById('mTWu').textContent=`${zu} (${eff.TWpct.toFixed(0)}% V)`;
+  const soOn=eff.SOMm>0.01;document.getElementById('mcSO').classList.toggle('ov',soOn);
+  document.getElementById('mSO').textContent=(eff.SOMm*conv).toFixed(SYS==='SI'?1:3);document.getElementById('mSOu').textContent=`${zu} (${eff.SOpct.toFixed(0)}% V)`;
+  const toOn=eff.TOMm>0.01;document.getElementById('mcTO').classList.toggle('ov',toOn);
+  document.getElementById('mTO').textContent=(eff.TOMm*conv).toFixed(SYS==='SI'?1:3);document.getElementById('mTOu').textContent=`${zu} (${eff.TOpct.toFixed(0)}% V)`;
+  document.getElementById('mTR').textContent=tcoRec!=null?tcoRec+'':'N/A';
+  document.getElementById('qDU').innerHTML=qual(r.DU,80,65);document.getElementById('qCU').innerHTML=qual(r.CU,80,65);document.getElementById('qEa').innerHTML=qual(eff.Ea,75,55);
+  const oQ=SYS==='SI'?opt.Q+' m³/h':Math.round(opt.Q*35.315)+' ft³/h';document.getElementById('optQLine').textContent=`Optimal Q: ${oQ}`;
+  const V=eff.V_app,tot=eff.Vb+eff.Vd+eff.vtw+r.V_ov,bal=V>0?Math.abs(tot-V)/V*100:0;
+  document.getElementById('volBal').textContent=`Volume balance: ${bal<1?'✓ OK':'⚠ '+bal.toFixed(1)+'% error'}`;
+}
+function updPhase(t,r){
+  document.getElementById('tD').textContent=`t = ${t.toFixed(1)} min`;
+  const p=document.getElementById('pD'),filling=isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<r.Tco;
+  if(t<=0){p.className='ph pc';p.textContent='Ready';}
+  else if(t<r.tAdvEnd&&!filling){p.className='ph pa';p.textContent='Advance';}
+  else if(filling){p.className='ph pf';p.textContent='Filling';}
+  else if(t>=r.Tco&&t<r.tEnd-5){p.className='ph pr';p.textContent='Recession';}
+  else{p.className='ph pc';p.textContent='Complete';}
+}
+function handleRun(){if(anim.run){stopAnim();}else{startAnim();}}
+function startAnim(){
+  const p=getP();try{simRes=compute(p,false);}catch(e){console.error(e);return;}
+  anim.run=true;anim.t=0;
+  document.getElementById('bRun').textContent='⏸ Pause';
+  if(!tsChart)initCharts();
+  const tcoRec=findTcoRec(simRes),opt=findOptQ(p),eff=computeEff(simRes);
+  updTs(simRes);setMetrics(simRes,eff,opt,tcoRec);updWp(simRes,0);
+  let last=null,lastZ=-99,lastM=-99;
+  function frame(ts){
+    if(!anim.run)return;if(!last)last=ts;
+    const dt=(ts-last)/1000;last=ts;
+    anim.t=Math.min(anim.t+dt*+document.getElementById('sSpd').value,simRes.tEnd);
+    drawField(anim.t,simRes);updPhase(anim.t,simRes);
+    if(anim.t-lastZ>8){updZ(simRes,anim.t);lastZ=anim.t;}
+    if(anim.t-lastM>3){updMetricsLive(simRes,anim.t);updWp(simRes,anim.t);lastM=anim.t;}
+    // Sync time-space chart: "Now" line at current time showing wetted extent
+    if(tsChart){
+      const xA=cAdv(anim.t,simRes),xR=cRec(anim.t,simRes);
+      const nd=[];
+      if(xA>0){nd.push({x:xR,y:anim.t});nd.push({x:xA,y:anim.t});}
+      tsChart.data.datasets[4].data=nd;
+      tsChart.update('none');
+    }
+    if(anim.t>=simRes.tEnd){updZ(simRes,simRes.tEnd);stopAnim();return;}
+    anim.raf=requestAnimationFrame(frame);
+  }
+  anim.raf=requestAnimationFrame(frame);
+}
+function stopAnim(){
+  anim.run=false;if(anim.raf)cancelAnimationFrame(anim.raf);
+  document.getElementById('bRun').textContent='▶ Run simulation';
+  if(tsChart){tsChart.data.datasets[4].data=[];tsChart.update('none');}
+  // Restore final summary metrics when animation ends or is paused
+  if(simRes&&simRes.tA&&simRes.tA[1]<1000){
+    const tcoRec=findTcoRec(simRes),opt=findOptQ(getP()),eff=computeEff(simRes);
+    setMetrics(simRes,eff,opt,tcoRec);
+    updWp(simRes,anim.t);
+  }
+}
+function setEnd(v){endOpen=v==='open';const bO=document.getElementById('bOpen'),bC=document.getElementById('bClosed');bO.classList.toggle('on',endOpen);bO.disabled=endOpen;bC.classList.toggle('on',!endOpen);bC.disabled=!endOpen;}
+function toggleAcc(){accOpen=!accOpen;document.getElementById('accD').style.maxHeight=accOpen?'230px':'0';document.getElementById('accI').style.transform=accOpen?'rotate(180deg)':'';}
+function setU(s){
+  SYS=s;document.getElementById('bSI').classList.toggle('on',s==='SI');document.getElementById('bUS').classList.toggle('on',s==='US');updAllLabels();
+  if(simRes&&simRes.tA&&simRes.tA[1]<1000){const tcoRec=findTcoRec(simRes),opt=findOptQ(getP()),eff=computeEff(simRes);setMetrics(simRes,eff,opt,tcoRec);updTs(simRes);updZ(simRes,simRes.tEnd||300);}
+}
+function updAllLabels(){
+  const isUS=SYS==='US';
+  const W=+document.getElementById('sW').value,L=+document.getElementById('sL').value;
+  const Q=+document.getElementById('sQ').value,Zr=+document.getElementById('sZreq').value;
+  const k=+document.getElementById('sK').value,f0=+document.getElementById('sF0').value,bH=+document.getElementById('sBH').value;
+  document.getElementById('vW').textContent=isUS?Math.round(W*3.28)+' ft':W+' m';
+  document.getElementById('vBH').textContent=isUS?(bH*3.28).toFixed(2)+' ft':bH.toFixed(2)+' m';
+  document.getElementById('vL').textContent=isUS?Math.round(L*3.28)+' ft':L+' m';
+  document.getElementById('vQ').textContent=isUS?Math.round(Q*35.315)+' ft³/h':Q+' m³/h';
+  document.getElementById('vZreq').textContent=isUS?(Zr*.03937).toFixed(2)+' in':Zr+' mm';
+  document.getElementById('vK').textContent=isUS?(k*.03937).toFixed(3)+' in/minᵃ':k+' mm/minᵃ';
+  document.getElementById('vF0').textContent=isUS?(f0*.03937).toFixed(4)+' in/min':f0.toFixed(2)+' mm/min';
+  updQInfo();
+}
+function updQInfo(){
+  const Q=+document.getElementById('sQ').value,W=+document.getElementById('sW').value;
+  const bH=+document.getElementById('sBH').value,S=Math.max(+document.getElementById('sSlope').value/100,5e-5);
+  const nM=SOILS[document.getElementById('sSoil').value].nM;
+  const q=Q/W,q_max=qMaxAtBH(nM,bH,S),q_ov=Math.max(0,q-q_max);
+  const el=document.getElementById('qI');
+  if(q_ov>0.01){const qd=SYS==='SI'?q.toFixed(1)+' m³/h·m':(q*10.764).toFixed(0)+' ft³/h·ft';const od=SYS==='SI'?q_ov.toFixed(1)+' m³/h·m':(q_ov*10.764).toFixed(0)+' ft³/h·ft';el.textContent=`q = ${qd} — ⚠ overflow at ${od}`;el.style.color='var(--color-text-danger)';}
+  else{el.textContent=SYS==='SI'?`q = ${q.toFixed(1)} m³/h·m per unit width`:`q = ${(q*10.764).toFixed(0)} ft³/h·ft per unit width`;el.style.color='var(--color-text-secondary)';}
+}
+[['sK','vK',v=>SYS==='US'?(v*.03937).toFixed(3)+' in/minᵃ':v+' mm/minᵃ'],['sA','vA',v=>parseFloat(v).toFixed(2)],['sF0','vF0',v=>SYS==='US'?(parseFloat(v)*.03937).toFixed(4)+' in/min':parseFloat(v).toFixed(2)+' mm/min']].forEach(([id,vid,fmt])=>document.getElementById(id).addEventListener('input',function(){document.getElementById(vid).textContent=fmt(this.value);}));
+document.getElementById('sSoil').addEventListener('change',function(){const s=SOILS[this.value];document.getElementById('sK').value=s.k;document.getElementById('sA').value=s.a;document.getElementById('sF0').value=s.f0;updAllLabels();});
+document.getElementById('sSlope').addEventListener('input',function(){document.getElementById('vSlope').textContent=parseFloat(this.value).toFixed(2)+'%';updQInfo();});
+document.getElementById('sW').addEventListener('input',function(){document.getElementById('vW').textContent=SYS==='US'?Math.round(+this.value*3.28)+' ft':this.value+' m';updQInfo();});
+document.getElementById('sBH').addEventListener('input',function(){document.getElementById('vBH').textContent=SYS==='US'?(+this.value*3.28).toFixed(2)+' ft':(+this.value).toFixed(2)+' m';updQInfo();});
+document.getElementById('sL').addEventListener('input',function(){document.getElementById('vL').textContent=SYS==='US'?Math.round(+this.value*3.28)+' ft':this.value+' m';});
+document.getElementById('sQ').addEventListener('input',function(){document.getElementById('vQ').textContent=SYS==='US'?Math.round(+this.value*35.315)+' ft³/h':this.value+' m³/h';updQInfo();});
+document.getElementById('sZreq').addEventListener('input',function(){document.getElementById('vZreq').textContent=SYS==='US'?(+this.value*.03937).toFixed(2)+' in':this.value+' mm';});
+document.getElementById('sTco').addEventListener('input',function(){document.getElementById('vTco').textContent=this.value+' min';});
+document.getElementById('sSpd').addEventListener('input',function(){document.getElementById('vSpd').textContent=this.value+' min/s';});
+window.addEventListener('load',()=>{const p=getP();const m={tA:Array(NS+1).fill(99999),tR:Array(NS+1).fill(99999),Z:Array(NS+1).fill(0),y0:.034,vR:4.8,S:p.S,L:p.L,W:p.W,bH:p.bH,N:NS,k:p.k,a:p.a,f0:p.f0,Tco:p.Tco,Zreq:p.Zreq,openEnd:endOpen,tAdvEnd:0,tEnd:300,Zavg:0,Zlq:0,DU:0,CU:0,VTW:0,V_ov:0,V_sideOv:0,V_tailOv:0,q:p.q,q_ov:0,q_max:999,nM:p.nM};simRes=m;initCharts();drawField(0,m);updPhase(0,m);updQInfo();});
+</script>
+</body>
+</html>
