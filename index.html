@@ -79,6 +79,21 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
 .rbtn:hover{opacity:.85}
 .xbtn{background:transparent;color:var(--color-text-secondary);border:1.5px solid var(--color-border-secondary);border-radius:8px;padding:7px 9px;font-size:13px;font-weight:500;cursor:pointer;width:100%;font-family:var(--font-sans);margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px}
 .xbtn:hover{background:var(--color-background-secondary)}
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:.5px solid var(--color-border-tertiary);margin-bottom:14px}
+.tab{background:none;border:none;border-bottom:2.5px solid transparent;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;color:var(--color-text-secondary);font-family:var(--font-sans);white-space:nowrap;transition:color .15s,border-color .15s;margin-bottom:-1px}
+.tab.on{color:var(--color-text-info);border-bottom-color:var(--color-text-info)}
+/* ── Inline inputs ── */
+.inp{border:.5px solid var(--color-border-secondary);border-radius:6px;padding:5px 8px;font-size:13px;background:var(--color-background-secondary);color:var(--color-text-primary);font-family:var(--font-sans);width:100%;box-sizing:border-box}
+textarea.inp{resize:vertical;height:110px;font-family:'Courier New',monospace;font-size:12px;line-height:1.4}
+/* ── Eval ── */
+.evalGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+/* ── Design grid ── */
+.dGrid{border-collapse:collapse;font-size:11.5px;width:100%}
+.dGrid th{padding:4px 7px;text-align:center;font-size:10.5px;font-weight:500;color:var(--color-text-secondary);background:var(--color-background-secondary);border:.5px solid var(--color-border-tertiary)}
+.dGrid td{padding:5px 4px;text-align:center;color:#fff;font-weight:600;font-size:11px;border:.5px solid rgba(255,255,255,.1);cursor:default;min-width:50px;line-height:1.25}
+.dGrid td.opt{box-shadow:inset 0 0 0 2px #fff}
+.dLeg{font-size:10.5px;color:var(--color-text-secondary);padding:5px 4px;background:transparent!important;color:var(--color-text-secondary)!important}
 </style>
 </head>
 <body>
@@ -106,6 +121,14 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
   </div>
 </div>
 
+<!-- ── Tab bar ── -->
+<div class="tabs" role="tablist">
+  <button class="tab on" id="tab-sim" role="tab" onclick="switchTab('sim')">▶ Simulation</button>
+  <button class="tab" id="tab-eval" role="tab" onclick="switchTab('eval')">📊 Evaluation</button>
+  <button class="tab" id="tab-design" role="tab" onclick="switchTab('design')">🎯 Design</button>
+</div>
+
+<div id="tabContent-sim">
 <!-- ── Key performance indicators (top) ── -->
 <div class="mg" style="margin-bottom:6px">
   <div class="mc"><div class="mll">Distribution uniformity</div><div class="mv" id="mDU">—</div><div class="mu">DU<sub>LQ</sub> (%)</div><div id="qDU"></div></div>
@@ -155,6 +178,20 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
       <button class="eb" id="bClosed" onclick="setEnd('closed')">Closed</button>
     </div>
   </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="sl" style="white-space:nowrap">Irr. type</span>
+    <div class="et" style="flex:1">
+      <button class="eb on" id="bBorder" onclick="setIrrType('border')" disabled>Border</button>
+      <button class="eb" id="bFurrow" onclick="setIrrType('furrow')">Furrow</button>
+    </div>
+  </div>
+  <div id="furrowPanel" style="display:none">
+    <div class="sep">Furrow geometry</div>
+    <div><div class="rw"><label class="sl" for="sB0">Base width b₀</label><span class="sv" id="vB0">0.25 m</span></div><input type="range" id="sB0" min="0.05" max="0.60" step="0.05" value="0.25"></div>
+    <div><div class="rw"><label class="sl" for="sZS">Side slope z (H:V)</label><span class="sv" id="vZS">1.0</span></div><input type="range" id="sZS" min="0" max="3" step="0.25" value="1.0"></div>
+    <div><div class="rw"><label class="sl" for="sFS">Furrow spacing</label><span class="sv" id="vFS">0.75 m</span></div><input type="range" id="sFS" min="0.50" max="2.0" step="0.05" value="0.75"></div>
+    <div class="qi" id="furrowInfo">Trapezoidal section · y₀ from Manning</div>
+  </div>
   <div class="sep">Field geometry</div>
   <div><div class="rw"><label class="sl" for="sSlope">Slope</label><span class="sv" id="vSlope">0.50%</span></div><input type="range" id="sSlope" min="0" max="2" step="0.05" value="0.5"></div>
   <div><div class="rw"><label class="sl" for="sW">Border width</label><span class="sv" id="vW">10 m</span></div><input type="range" id="sW" min="1" max="50" step="1" value="10"></div>
@@ -196,6 +233,70 @@ select{font-family:var(--font-sans);border:0.5px solid var(--color-border-tertia
   <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(220,80,20,.5);border-radius:2px;display:inline-block"></span>Side overflow</span>
   <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:rgba(20,90,200,.5);border-radius:2px;display:inline-block"></span>End overflow</span>
 </div>
+</div><!-- end tabContent-sim -->
+
+<!-- ── Evaluation tab ── -->
+<div id="tabContent-eval" style="display:none">
+  <div style="max-width:760px">
+    <p style="font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:14px">
+      Enter measured advance data to estimate Kostiakov–Lewis parameters via power advance curve fitting
+      (t<sub>A</sub> = p·x<sup>r</sup>). The exponent a is derived as a=(r−1)/r (Walker &amp; Skogerboe 1987);
+      k is estimated from the Lewis–Milne volume balance.
+    </p>
+    <div class="evalGrid">
+      <div>
+        <div class="rw" style="margin-bottom:5px"><label class="sl">Advance measurements</label><span style="font-size:11px;color:var(--color-text-tertiary)">distance · time (one per line)</span></div>
+        <textarea class="inp" id="advData" placeholder="50   8&#10;100  18&#10;200  45&#10;300  85&#10;400 138&#10;500 205"></textarea>
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:4px">Space- or comma-separated: distance (m) then time (min)</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div><div class="sl" style="margin-bottom:3px">Field length L (m)</div><input type="number" class="inp" id="evalL" value="500" min="20" max="2000" step="10"></div>
+        <div><div class="sl" style="margin-bottom:3px">Unit discharge q (m²/h)</div><input type="number" class="inp" id="evalQ" value="5.0" min="0.1" max="60" step="0.1"></div>
+        <div><div class="sl" style="margin-bottom:3px">Target depth Z<sub>req</sub> (mm)</div><input type="number" class="inp" id="evalZreq" value="80" min="10" max="300" step="5"></div>
+        <button class="rbtn" onclick="fitAdvanceCurve()" style="margin-top:auto">Fit advance curve</button>
+      </div>
+    </div>
+    <div id="evalResults" style="display:none;margin-top:8px">
+      <div class="sep" style="margin-bottom:10px">Fitted parameters</div>
+      <div class="mg" style="margin-bottom:10px">
+        <div class="mc"><div class="mll">Advance exponent</div><div class="mv" id="evalR">—</div><div class="mu">r (t=p·x<sup>r</sup>)</div></div>
+        <div class="mc"><div class="mll">Kostiakov a</div><div class="mv" id="evalA">—</div><div class="mu">= (r−1)/r</div></div>
+        <div class="mc"><div class="mll">Kostiakov k</div><div class="mv" id="evalK">—</div><div class="mu">mm/min<sup>a</sup></div></div>
+        <div class="mc"><div class="mll">RMSE</div><div class="mv" id="evalRMSE">—</div><div class="mu">min</div></div>
+      </div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px">Advance coefficient p = <b id="evalP">—</b> min/m<sup>r</sup></div>
+      <div style="position:relative;height:210px;margin-bottom:12px"><canvas id="evalC"></canvas></div>
+      <button class="rbtn" onclick="applyEvalToSim()">Apply parameters to Simulation tab →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Design tab ── -->
+<div id="tabContent-design" style="display:none">
+  <div style="display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start">
+    <div class="cp" style="background:var(--color-background-secondary);border-radius:10px;padding:12px">
+      <div class="sep" style="margin-top:0">Discharge range</div>
+      <div><div class="sl" style="margin-bottom:3px">Q min (m³/h)</div><input type="number" class="inp" id="dQmin" value="10" min="1" max="500"></div>
+      <div><div class="sl" style="margin-bottom:3px">Q max (m³/h)</div><input type="number" class="inp" id="dQmax" value="200" min="1" max="600"></div>
+      <div class="sep">Cutoff time range</div>
+      <div><div class="sl" style="margin-bottom:3px">Tco min (min)</div><input type="number" class="inp" id="dTmin" value="30" min="10" max="400"></div>
+      <div><div class="sl" style="margin-bottom:3px">Tco max (min)</div><input type="number" class="inp" id="dTmax" value="360" min="30" max="600"></div>
+      <div class="sep">Constraint</div>
+      <div><div class="sl" style="margin-bottom:3px">Min DU<sub>LQ</sub> (%)</div><input type="number" class="inp" id="dDUtar" value="70" min="0" max="100"></div>
+      <div style="font-size:12px;color:var(--color-text-tertiary);line-height:1.5;margin-top:4px">Uses soil, geometry and Kostiakov params from the Simulation tab.</div>
+      <button class="rbtn" style="margin-top:8px" onclick="runDesign()">Run 8×8 sweep</button>
+    </div>
+    <div>
+      <div id="designPlaceholder" style="display:flex;align-items:center;justify-content:center;height:180px;color:var(--color-text-tertiary);font-size:14px">Set parameters and click "Run 8×8 sweep"</div>
+      <div id="designResultsDiv" style="display:none">
+        <div style="margin-bottom:8px;font-size:13px;font-weight:500" id="designBest"></div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px">Top = Ea (%), bottom = DU (%). Greyed = DU below target. ★ = optimal Ea meeting DU constraint.</div>
+        <div style="overflow-x:auto;margin-bottom:14px" id="designGrid"></div>
+        <div style="position:relative;height:230px"><canvas id="designC"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div><!-- #wrap -->
 
@@ -218,12 +319,25 @@ const fc=document.getElementById('fC'),cx=fc.getContext('2d');
 function getP(){
   const st=document.getElementById('sSoil').value,s=SOILS[st];
   const W=+document.getElementById('sW').value,Q=+document.getElementById('sQ').value;
-  return{soilType:st,k:+document.getElementById('sK').value,a:+document.getElementById('sA').value,
-    f0:+document.getElementById('sF0').value,nM:s.nM,
-    S:Math.max(+document.getElementById('sSlope').value/100,5e-5),
-    W,Q_total:Q,q:Q/W,L:+document.getElementById('sL').value,
-    bH:+document.getElementById('sBH').value,
-    Zreq:+document.getElementById('sZreq').value,Tco:+document.getElementById('sTco').value,openEnd:endOpen};
+  const S=Math.max(+document.getElementById('sSlope').value/100,5e-5);
+  const p={soilType:st,k:+document.getElementById('sK').value,a:+document.getElementById('sA').value,
+    f0:+document.getElementById('sF0').value,nM:s.nM,S,W,Q_total:Q,q:Q/W,
+    L:+document.getElementById('sL').value,bH:+document.getElementById('sBH').value,
+    Zreq:+document.getElementById('sZreq').value,Tco:+document.getElementById('sTco').value,
+    openEnd:endOpen,irrType};
+  if(irrType==='furrow'){
+    const b0=+document.getElementById('sB0').value;
+    const zS=+document.getElementById('sZS').value;
+    const fs=+document.getElementById('sFS').value;
+    const nF=Math.max(1,Math.round(W/fs));
+    const Qf_mps=(Q/nF)/3600;
+    const y0f=furrowNormalDepth(Qf_mps,b0,zS,s.nM,S);
+    p.b0=b0;p.zS=zS;p.furrowSpacing=fs;p.nFurrows=nF;
+    p.y0_furrow=y0f;
+    // Use per-furrow equivalent unit-width discharge for Lewis-Milne
+    p.q=(Q/nF)/fs;
+  }
+  return p;
 }
 function solveNR(Qm,sy,y0,sz,km,f0m,a,x,t0){
   if(Qm<=sz*x*f0m*1.0001)return Infinity;
@@ -251,13 +365,26 @@ function solveTau(Zt,k,a,f0,t0){
   return t;
 }
 function qMaxAtBH(nM,bH,S){return(1/nM)*Math.pow(bH,5/3)*Math.sqrt(S)*3600;}
+// Infiltrated volume per unit width (m²) over the field at time t (trapezoidal in x).
+// Each station infiltrates from its advance time until min(t, its recession time).
+function infiltVol(t,tA,tR,N,L,k,a,f0){
+  const dx=L/N;let s=0;
+  for(let i=0;i<=N;i++){
+    if(!isFinite(tA[i])||tA[i]>=t)continue;
+    const tau=Math.min(t,isFinite(tR[i])?tR[i]:t)-tA[i];
+    if(tau<=0)continue;
+    s+=(k*Math.pow(tau,a)+f0*tau)/1000*dx*((i===0||i===N)?.5:1);
+  }
+  return s;
+}
 function compute(p,fast){
-  const{k,a,f0,nM,S,q,L,Tco,Zreq,openEnd,bH}=p;
+  const{k,a,f0,nM,S,q,L,Tco,Zreq,openEnd,bH,y0_furrow}=p;
   // Full discharge drives all advance/recession physics.
   // Overflow is a LATERAL loss (over the bund) that occurs when normal depth y0 > bH.
   // It is independent of tailwater at the tail end.
   const Qmps=q/3600,Qmpm=q/60;
-  const y0=Math.pow(nM*Qmps/Math.sqrt(S),.6);
+  // For furrow mode, use Newton-Raphson normal depth; otherwise Manning for unit-width flow
+  const y0=y0_furrow||Math.pow(nM*Qmps/Math.sqrt(S),.6);
   const q_max=qMaxAtBH(nM,bH,S);
   // Overflow condition: normal depth exceeds border height (side bund overflow during advance)
   const q_ov=y0>bH?Math.max(0,q-q_max):0;
@@ -271,13 +398,14 @@ function compute(p,fast){
   }
   const vR=Math.max(.3,(5/3)/nM*Math.pow(y0,2/3)*Math.sqrt(S)*60);
   const tR=new Array(NS+1);
-  for(let i=0;i<=NS;i++)tR[i]=isFinite(tA[i])?Tco+((i/NS)*L)/vR:Infinity;
-  const Zo=new Array(NS+1).fill(0);
-  for(let i=0;i<=NS;i++){
-    if(!isFinite(tA[i])||!isFinite(tR[i]))continue;
-    const tau=Math.max(0,tR[i]-tA[i]);
-    Zo[i]=tau>0?k*Math.pow(tau,a)+f0*tau:0;
-  }
+  let yPond_co=0; // average pond depth at Tco for level-basin recession display
+  // Level-basin recession: for near-zero slope (S < 0.0005 m/m) the kinematic-wave
+  // recession front is physically wrong. Use global volume-balance (bathtub) recession:
+  // find a single tR_global such that total infiltration = total inflow (q·Tco).
+  // All wetted segments recede simultaneously at tR_global.
+  const LEVEL_THR=5e-4; // 0.05 % (= 0.5 mm/m) slope threshold
+  const isLevel=S<LEVEL_THR;
+  // Tailwater runoff (open end) / excess volume (closed end) after the front reaches the tail before Tco
   let VTW=0;
   const tAe=tA[NS];
   if(!fast&&isFinite(tAe)&&tAe<Tco){
@@ -292,8 +420,70 @@ function compute(p,fast){
       VTW+=Math.max(0,Qmpm-Qi)*dt;
     }
   }
+  if(isLevel){
+    // ── Level basin ──────────────────────────────────────────────────────────
+    // Before Tco: Lewis-Milne advance (inflow on).
+    // After Tco: inflow stops; the front keeps moving on stored surface water only.
+    // Front speed decays from its Lewis-Milne value at Tco as the pond thins
+    // (Manning: v ∝ y^(2/3)·√(y/x) → v ∝ y^(7/6)/√x) and stops when the pond is spent.
+    // Recession: bathtub — all wetted stations dry at the same tR when surface volume = 0.
+    const dx=L/NS,noR=new Array(NS+1).fill(Infinity);
+    const Vin=((q-q_ov)/60)*Tco-(openEnd?VTW:0); // net volume delivered and kept (m²)
+    let iF=0;while(iF<NS&&isFinite(tA[iF+1])&&tA[iF+1]<=Tco)iF++;
+    let xCo=iF*dx;
+    if(iF<NS){
+      const tNext=tA[iF+1];
+      let v0=0;
+      if(isFinite(tNext)&&tNext>tA[iF]){v0=dx/(tNext-tA[iF]);xCo=(iF+(Tco-tA[iF])/(tNext-tA[iF]))*dx;}
+      for(let i=iF+1;i<=NS;i++)tA[i]=Infinity; // discard continued-inflow Lewis-Milne times
+      const x0=Math.max(xCo,dx);
+      const yCo=(Vin-infiltVol(Tco,tA,noR,NS,L,k,a,f0))/x0;
+      if(v0>0&&yCo>0){
+        let t=Tco,x=xCo,nI=iF+1;const dtA=Math.max(.1,Tco/400);
+        while(nI<=NS&&t<Tco+5000){
+          t+=dtA;
+          const Vs=Vin-infiltVol(t,tA,noR,NS,L,k,a,f0);
+          if(Vs<=0)break;
+          const y=Vs/Math.max(x,dx);
+          if(y<.002)break;                                   // < 2 mm: front stalls
+          const v=v0*Math.pow(y/yCo,7/6)*Math.sqrt(x0/Math.max(x,dx));
+          if(v<1e-3)break;                                   // < 1 mm/min: stalled
+          x+=v*dtA;
+          while(nI<=NS&&x>=nI*dx){tA[nI]=t;nI++;}
+        }
+      }
+    } else xCo=L;
+    // Bathtub recession time: infiltrated volume = Vin
+    let tLo=Tco,tHi=Tco+600;
+    while(infiltVol(tHi,tA,noR,NS,L,k,a,f0)<Vin&&tHi<1e5)tHi*=2;
+    for(let it=0;it<60;it++){
+      const tMid=(tLo+tHi)/2;
+      if(infiltVol(tMid,tA,noR,NS,L,k,a,f0)<Vin)tLo=tMid;else tHi=tMid;
+      if(tHi-tLo<.05)break;
+    }
+    const tR_global=(tLo+tHi)/2;
+    yPond_co=Math.max(0,Vin-infiltVol(Tco,tA,noR,NS,L,k,a,f0))/Math.max(xCo,dx);
+    for(let i=0;i<=NS;i++)tR[i]=isFinite(tA[i])?tR_global:Infinity;
+  } else {
+    // ── Sloped border ────────────────────────────────────────────────────────
+    // Recession travels down-slope from the head at vR. The front may keep moving
+    // after Tco, but only until the recession front catches it (advance meets recession).
+    for(let i=0;i<=NS;i++)tR[i]=isFinite(tA[i])?Tco+((i/NS)*L)/vR:Infinity;
+    let cut=false;
+    for(let i=1;i<=NS;i++){
+      if(cut||!isFinite(tA[i])||tA[i]>=tR[i]){cut=true;tA[i]=Infinity;tR[i]=Infinity;}
+    }
+  }
+  const Zo=new Array(NS+1).fill(0);
+  for(let i=0;i<=NS;i++){
+    if(!isFinite(tA[i])||!isFinite(tR[i]))continue;
+    const tau=Math.max(0,tR[i]-tA[i]);
+    Zo[i]=tau>0?k*Math.pow(tau,a)+f0*tau:0;
+  }
   const Z=[...Zo],tRf=[...tR];
-  if(!fast&&!openEnd&&VTW>0){
+  // Closed sloped border: excess (tailwater) volume ponds at the tail → extra infiltration there.
+  // (Level basins already conserve all volume through the bathtub balance above.)
+  if(!fast&&!openEnd&&!isLevel&&VTW>0){
     for(let i=1;i<=NS;i++){
       if(!isFinite(tA[i]))continue;
       const xi=i/NS,dZ=VTW*2000*xi/L;
@@ -324,16 +514,16 @@ function compute(p,fast){
     }
     const yAvg_co=Math.max(0,Vin_co-Vinf_co)/L;
     // Sloped: tail depth ≈ 2.2× avg (water piles at low end); basin: uniform
-    const yTail_co=S<1e-5?yAvg_co:Math.min(2.2*yAvg_co,yAvg_co+S*L);
+    const yTail_co=S<5e-4?yAvg_co:Math.min(2.2*yAvg_co,yAvg_co+S*L);
     if(yTail_co>bH){
-      // Volume spilled above bH: triangular profile for sloped, uniform for basin
-      V_tailOv=S<1e-5?Math.max(0,yAvg_co-bH)*L:Math.max(0,yTail_co-bH)*L/2;
+      // Volume spilled above bH: uniform for level basin, triangular for sloped
+      V_tailOv=S<5e-4?Math.max(0,yAvg_co-bH)*L:Math.max(0,yTail_co-bH)*L/2;
     }
   }
   const V_ov=V_sideOv+V_tailOv;
   const tRmax=tRf.filter(v=>isFinite(v)).reduce((m,v)=>Math.max(m,v),0)||Tco+50;
   return{tA,tR:tRf,Z,Zv,Zavg,Zlq,DU,CU,y0,vR,tAdvEnd,tEnd:tRmax+5,N:NS,
-    VTW,V_ov,V_sideOv,V_tailOv,q,q_ov,q_max,k,a,f0,S,L,W:p.W,bH:bH||.2,Tco,Zreq,nM,openEnd};
+    VTW,V_ov,V_sideOv,V_tailOv,q,q_ov,q_max,k,a,f0,S,L,W:p.W,bH:bH||.2,Tco,Zreq,nM,openEnd,y_pond:yPond_co};
 }
 // Live metrics at animation time t (called each frame)
 function computeEffAtT(r,t){
@@ -469,6 +659,25 @@ function cZ(i,t,r){
   return tau>0?r.k*Math.pow(Math.max(tau,.01),r.a)+r.f0*tau:0;
 }
 function cAdv(t,r){let x=0;for(let i=1;i<=r.N;i++){if(isFinite(r.tA[i])&&r.tA[i]<=t)x=(i/r.N)*r.L;else break;}return Math.min(x,r.L);}
+// Advance front position (interpolated between stations) at time t
+function cAdvI(t,r){
+  let i=0;while(i<r.N&&isFinite(r.tA[i+1])&&r.tA[i+1]<=t)i++;
+  const dx=r.L/r.N;
+  if(i<r.N&&isFinite(r.tA[i+1])&&r.tA[i+1]>r.tA[i])return Math.min(r.L,(i+(t-r.tA[i])/(r.tA[i+1]-r.tA[i]))*dx);
+  return i*dx;
+}
+// Level basin: uniform pond depth (m) = surface volume / wetted length (mass-consistent with compute())
+function levelDepth(t,r){
+  if(t<=0)return 0;
+  const tRg=r.tR[0];
+  if(isFinite(tRg)&&t>=tRg)return 0;
+  let Vin=((r.q-(r.q_ov||0))/60)*Math.min(t,r.Tco);
+  // Open end: runoff leaves once the front reaches the tail (spread VTW over tA[N]…Tco)
+  const tE=r.tA[r.N];
+  if(r.openEnd&&isFinite(tE)&&t>tE&&r.Tco>tE)Vin-=(r.VTW||0)*Math.min(1,(t-tE)/(r.Tco-tE));
+  const Vs=Vin-infiltVol(t,r.tA,r.tR,r.N,r.L,r.k,r.a,r.f0);
+  return Math.max(0,Vs)/Math.max(cAdvI(t,r),r.L/r.N);
+}
 function cRec(t,r){if(t<=r.Tco)return 0;let x=0;for(let i=1;i<=r.N;i++){if(isFinite(r.tR[i])&&r.tR[i]<=t)x=(i/r.N)*r.L;else break;}return x;}
 
 function yFillDepth(t,r){
@@ -485,7 +694,7 @@ function yFillDepth(t,r){
     Vinf+=(r.k*Math.pow(tau,r.a)+r.f0*tau)/1000*dx; // m
   }
   const yAvg=Math.max(0,Vin-Vinf)/r.L;
-  return r.S<1e-5?yAvg:Math.min(2.2*yAvg,yAvg+r.S*r.L);
+  return r.S<5e-4?yAvg:Math.min(2.2*yAvg,yAvg+r.S*r.L);
 }
 function drawField(t,r){
   const dpr=window.devicePixelRatio||1,W=fc.offsetWidth||440,H=fc.offsetHeight||310;
@@ -497,17 +706,19 @@ function drawField(t,r){
   const bH_m=r.bH||.2,bH_px=Math.min(soilZH*.45,bH_m*1000/mmPx);
   // Water depth: rises during filling stage in closed-end border
   let yDepth=r.y0;
-  if(!r.openEnd&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.Tco){
+  if(r.S<5e-4){
+    yDepth=levelDepth(t,r); // same mass balance as the depth chart
+  } else if(!r.openEnd&&isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<=r.Tco){
     const yF=yFillDepth(t,r);yDepth=Math.max(r.y0,yF);
   }
-  const wPx=Math.min(bH_px,Math.max(4,yDepth*1000/mmPx));
+  const wPx=Math.min(bH_px,Math.max(t>0?2:0,yDepth*1000/mmPx));
   const airH=fH*.32-bH_px;
   const slPx=Math.min(26,r.S*fW*5);
   const syFn=xi=>MT+airH+bH_px+xi*slPx;
   const pxFn=xi=>ML+xi*fW;
   const overflowing=r.q_ov>0;
   // fillOvfl: water depth has risen above bH during filling stage
-  const fillOvfl=!r.openEnd&&yDepth>r.bH&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<r.Tco;
+  const fillOvfl=!r.openEnd&&yDepth>r.bH&&isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<r.Tco;
   cx.fillStyle=dk?'#1a2a38':'#c0dded';cx.fillRect(0,0,W,H);
   cx.beginPath();cx.moveTo(pxFn(0),syFn(0));cx.lineTo(pxFn(1),syFn(1));cx.lineTo(pxFn(1),syFn(1)+soilZH);cx.lineTo(pxFn(0),syFn(0)+soilZH);cx.closePath();
   const sg=cx.createLinearGradient(0,syFn(0),0,syFn(0)+soilZH);
@@ -558,7 +769,7 @@ function drawField(t,r){
     cx.fillStyle='#CC4010';cx.font='bold 11px sans-serif';cx.textAlign='left';cx.fillText('⚠ side overflow '+qd,ML+3,oy-5);
   }
   // Basin (S≈0): filling overflow spills from head bund as well as tail
-  if(fillOvfl&&r.S<1e-5){
+  if(fillOvfl&&r.S<5e-4){
     const oy=syFn(0)-bH_px;
     cx.strokeStyle='rgba(20,90,200,.75)';cx.lineWidth=1.5;cx.setLineDash([]);
     for(let j=0;j<3;j++){const yy=oy-1+j*5;cx.beginPath();cx.moveTo(ML,yy);cx.lineTo(ML-12,yy);cx.stroke();cx.fillStyle='rgba(20,90,200,.75)';cx.beginPath();cx.moveTo(ML-12,yy);cx.lineTo(ML-8,yy-3);cx.lineTo(ML-8,yy+3);cx.closePath();cx.fill();}
@@ -574,8 +785,9 @@ function drawField(t,r){
   cx.beginPath();cx.moveTo(pxFn(0),syFn(0));cx.lineTo(pxFn(1),syFn(1));cx.stroke();
   // Wave / ripple splash when advance front hits the tail end
   const splashDur=16;
-  if(isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.tAdvEnd+splashDur){
-    const prog=(t-r.tAdvEnd)/splashDur;
+  const tAdvDisp=isFinite(r.tA[r.N])?r.tA[r.N]:Infinity;
+  if(isFinite(tAdvDisp)&&t>=tAdvDisp&&t<=tAdvDisp+splashDur){
+    const prog=(t-tAdvDisp)/splashDur;
     const pSpl=pxFn(1),ySpl=syFn(1)-wPx*.6;
     cx.lineWidth=2;
     for(let k=0;k<3;k++){
@@ -607,7 +819,7 @@ function drawField(t,r){
       cx.fillStyle='#1060C0';cx.font='bold 10px sans-serif';cx.textAlign='left';
       cx.fillText('end overflow',pT+22,oy+6);
     }
-  } else if(xAdv>=r.L-.5&&t>r.tAdvEnd){
+  } else if(xAdv>=r.L-.5&&t>tAdvDisp){
     const pT=pxFn(1),yw=syFn(1)-wPx/2;
     // Animated flow lines with phase offset
     const phase=(t*0.3)%1;
@@ -637,11 +849,33 @@ function computeWaterProfile(r,t){
   if(!r||t<=0)return{pts:[],bH_line:[]};
   const N=r.N,dx=r.L/N,xAdv=cAdv(t,r),xRec=cRec(t,r);
   const conv=SYS==='SI'?1000:39.37; // m → mm or m → in*1000
+  if(r.S<5e-4){
+    // Level basin: uniform pond over the wetted length (same mass balance as canvas/compute)
+    const yL=levelDepth(t,r),xF=cAdvI(t,r);
+    const pts=[],bH_line=[];
+    const step=Math.max(1,Math.round(N/60));
+    for(let i=0;i<=N;i+=step){
+      const x=(i/N)*r.L,xDisp=SYS==='SI'?x:x*3.28084;
+      const wet=x<=xF+1e-6&&isFinite(r.tR[i])?t<r.tR[i]:x<=xF+1e-6;
+      pts.push({x:xDisp,y:+((wet?yL:0)*conv).toFixed(1)});
+      bH_line.push({x:xDisp,y:+(r.bH*conv).toFixed(1)});
+    }
+    // add the exact front point so the edge is sharp
+    if(xF>0&&xF<r.L&&yL>0){
+      const xd=SYS==='SI'?xF:xF*3.28084;
+      pts.push({x:xd,y:+(yL*conv).toFixed(1)},{x:xd+1e-3,y:0});
+      pts.sort((p,q)=>p.x-q.x||q.y-p.y);
+    }
+    return{pts,bH_line};
+  }
   // Average ponded depth during filling stage (closed-end)
   let yAvg=0;
-  const inFilling=!r.openEnd&&isFinite(r.tAdvEnd)&&t>=r.tAdvEnd&&t<=r.Tco;
+  // inFilling: closed-end border AND advance reached the tail (tA[N] finite) AND in fill stage
+  const inFilling=!r.openEnd&&isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<=r.Tco;
   if(inFilling){
-    const tF=Math.min(t,r.Tco),Vin=(r.q/60)*tF;
+    const tF=Math.min(t,r.Tco);
+    const qEff=Math.min(r.q,r.q_max||r.q); // net inflow: side overflow already left laterally
+    const Vin=(qEff/60)*tF;
     let Vinf=0;
     for(let i=0;i<N;i++){const tau=Math.max(0,tF-(r.tA[i]||0));if(tau<.001)continue;Vinf+=(r.k*Math.pow(tau,r.a)+r.f0*tau)/1000*dx;}
     yAvg=Math.max(0,Vin-Vinf)/r.L;
@@ -654,12 +888,19 @@ function computeWaterProfile(r,t){
     let y=0;
     if(inFilling){
       // Triangular backwater for sloped; uniform for basin
-      y=r.S<1e-5?yAvg:2*yAvg*(x/r.L);
+      // Add base normal-flow depth y0 so inlet isn't shown as dry while inflow is active
+      const pond=r.S<5e-4?yAvg:2*yAvg*(x/r.L); // level basin: uniform; sloped: triangular
+      y=Math.max(r.y0,pond);
     } else if(t>r.Tco){
-      // Recession: depth proportional to time remaining until dry
-      if(isFinite(r.tR[i])&&t<r.tR[i]){
-        const recDur=r.tR[i]-r.Tco;
-        y=recDur>0?r.y0*Math.max(0,(r.tR[i]-t)/recDur):0;
+      // Recession: depth proportional to time remaining until dry.
+      // Only show depth for segments physically wetted before cutoff (tA[i] <= Tco).
+      // Segments beyond the advance front at cutoff never received water and must stay at 0.
+      if(isFinite(r.tA[i])&&r.tA[i]<=t&&isFinite(r.tR[i])&&t<r.tR[i]){
+        const recStart=r.S<5e-4?r.Tco:Math.max(r.Tco,r.tA[i]); // level: all start receding at Tco; sloped: wave arrives later
+        const recDur=Math.max(0.01,r.tR[i]-recStart);
+        // Level basin: use actual volume-based pond depth at Tco; sloped: normal-flow depth y0
+        const recDepth=r.S<5e-4?(r.y_pond||r.y0):r.y0;
+        y=recDepth*Math.max(0,(r.tR[i]-t)/recDur);
       }
     } else {
       // Advance phase: y0 where wetted, 0 elsewhere
@@ -677,11 +918,34 @@ function updWp(r,t){
   wpChart.data.datasets[1].data=bH_line;
   // Dynamic y-axis max: 1.5× border height or 2× y0, whichever is bigger
   const conv=SYS==='SI'?1000:39.37;
-  const yMax=Math.max(r.bH*conv*1.6,r.y0*conv*2.2,10);
+  const recDepth=(r.S<5e-4&&r.y_pond)?r.y_pond:r.y0;
+  const yMax=Math.max(r.bH*conv*1.6,recDepth*conv*2.2,r.y0*conv*1.5,10);
   wpChart.options.scales.y.max=+yMax.toFixed(0);
-  wpChart.options.scales.x.max=SYS==='SI'?r.L:+(r.L*3.28084).toFixed(0);
+  const xMaxDisp=SYS==='SI'?r.L:+(r.L*3.28084).toFixed(0);
+  wpChart.options.scales.x.max=xMaxDisp;
   wpChart.options.scales.x.title.text=SYS==='SI'?'Distance (m)':'Distance (ft)';
   wpChart.options.scales.y.title.text=SYS==='SI'?'Depth (mm)':'Depth (in)';
+  // Phase label as chart title
+  const isDk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=isDk?'#9ca3af':'#6b7280';
+  const inFill=!r.openEnd&&isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<=r.Tco;
+  let phaseLabel='';
+  if(t<=0)phaseLabel='';
+  else if(t<r.Tco&&!inFill){const xA=(cAdv(t,r)).toFixed(0);phaseLabel=`Advance — front at ${xA} ${SYS==='SI'?'m':'ft'} | Tco = ${r.Tco.toFixed(0)} min`;}
+  else if(inFill)phaseLabel=`Filling (advance complete) | Tco = ${r.Tco.toFixed(0)} min`;
+  else if(t>=r.Tco&&t<r.tAdvEnd){const xA=cAdvI(t,r).toFixed(0);phaseLabel=`Inflow off — front still advancing, at ${xA} ${SYS==='SI'?'m':'ft'}`;}
+  else if(t>=r.Tco&&t<r.tEnd-3)phaseLabel=`Recession (cutoff at ${r.Tco.toFixed(0)} min)`;
+  else phaseLabel='Complete';
+  wpChart.options.plugins.title.display=phaseLabel.length>0;
+  wpChart.options.plugins.title.text=phaseLabel;
+  wpChart.options.plugins.title.color=tc;
+  // Advance-front-at-Tco vertical marker (shown only after Tco or when Tco is known)
+  const xAdvTco=cAdv(r.Tco,r);
+  if(xAdvTco<r.L-0.5){
+    const xD=SYS==='SI'?xAdvTco:xAdvTco*3.28084;
+    wpChart.data.datasets[2].data=[{x:xD,y:0},{x:xD,y:+(yMax).toFixed(0)}];
+    wpChart.data.datasets[2].label=(SYS==='SI'?`Front at cutoff (${xAdvTco.toFixed(0)} m)`:`Front at cutoff (${(xAdvTco*3.28).toFixed(0)} ft)`);
+  }else{wpChart.data.datasets[2].data=[];}
   wpChart.update('none');
 }
 function initCharts(){
@@ -691,12 +955,13 @@ function initCharts(){
   const tc=isDk?'#9ca3af':'#6b7280',gc=isDk?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.07)';
   const tck={font:{size:11},color:tc},grd={color:gc};
   tsChart=new Chart(document.getElementById('tsC'),{type:'scatter',data:{datasets:[
-    {label:'Advance',data:[],showLine:true,borderColor:'#4494CC',borderWidth:2,pointRadius:0,tension:.3},
+    {label:'Advance',data:[],showLine:true,borderColor:'#4494CC',borderWidth:2,pointRadius:0,tension:.3,
+     fill:{target:{datasetIndex:2},above:'rgba(68,148,204,0.12)',below:'rgba(68,148,204,0.12)'}},
     {label:'Filling',data:[],showLine:true,borderColor:'#8868CC',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
     {label:'Recession',data:[],showLine:true,borderColor:'#E08040',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:.2},
     {label:'Tco',data:[],showLine:true,borderColor:'#CC3020',borderWidth:1.5,borderDash:[4,3],pointRadius:0},
     {label:'Now',data:[],showLine:true,borderColor:'rgba(255,210,30,0.9)',borderWidth:2,pointRadius:5,pointBackgroundColor:'rgba(255,210,30,0.9)',pointBorderColor:'rgba(170,130,0,.8)',pointBorderWidth:1,tension:0,borderDash:[]}
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:it=>{const xl=SYS==='SI'?it.parsed.x.toFixed(0)+' m':Math.round(it.parsed.x*3.28)+' ft';return`${it.dataset.label}: ${xl}, t=${it.parsed.y.toFixed(1)} min`;}}}},scales:{x:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},y:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Time (min)',font:{size:12},color:tc}}},animation:{duration:0}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{boxWidth:16,font:{size:11},color:tc,filter:it=>it.datasetIndex<=3}},tooltip:{callbacks:{label:it=>{const xl=SYS==='SI'?it.parsed.x.toFixed(0)+' m':Math.round(it.parsed.x*3.28)+' ft';return`${it.dataset.label}: ${xl}, t=${it.parsed.y.toFixed(1)} min`;}}}},scales:{x:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},y:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Time (min)',font:{size:12},color:tc}}},animation:{duration:0}}});
   zChart=new Chart(document.getElementById('zC'),{type:'bar',data:{labels:[],datasets:[
     {type:'bar',label:'Z',data:[],backgroundColor:[],borderWidth:0,categoryPercentage:1,barPercentage:.98},
     {type:'line',label:'Zavg',data:[],borderColor:'#4494CC',borderWidth:1.5,borderDash:[5,4],pointRadius:0},
@@ -705,12 +970,15 @@ function initCharts(){
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{...tck,maxTicksLimit:9},grid:{display:false},title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},y:{beginAtZero:true,ticks:tck,grid:grd,title:{display:true,text:'Z (mm)',font:{size:12},color:tc}}},animation:{duration:0}}});
   wpChart=new Chart(document.getElementById('wpC'),{type:'scatter',data:{datasets:[
     {label:'Water depth',data:[],showLine:true,fill:true,
-     borderColor:'rgba(68,148,204,0.9)',borderWidth:2,pointRadius:0,tension:.35,
+     borderColor:'rgba(68,148,204,0.9)',borderWidth:2,pointRadius:0,tension:0,
      backgroundColor:'rgba(68,148,204,0.18)'},
     {label:'Border height',data:[],showLine:true,fill:false,
-     borderColor:'rgba(180,80,20,0.7)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0}
+     borderColor:'rgba(180,80,20,0.7)',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0},
+    {label:'Advance front at Tco',data:[],showLine:true,fill:false,
+     borderColor:'rgba(80,60,200,0.55)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:0}
   ]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:true,position:'top',align:'end',labels:{boxWidth:20,font:{size:11},color:tc,usePointStyle:true,pointStyle:'line'}},
+    plugins:{title:{display:false,text:'',font:{size:11},padding:{bottom:2}},
+      legend:{display:true,position:'top',align:'end',labels:{boxWidth:20,font:{size:11},color:tc,usePointStyle:true,pointStyle:'line',filter:it=>it.datasetIndex<2}},
       tooltip:{callbacks:{label:it=>{const xu=SYS==='SI'?'m':'ft',yu=SYS==='SI'?'mm':'in';return`${it.dataset.label}: ${it.parsed.x.toFixed(0)} ${xu}, ${it.parsed.y.toFixed(1)} ${yu}`;}}}},
     scales:{
       x:{type:'linear',min:0,ticks:tck,grid:grd,title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},
@@ -721,10 +989,17 @@ function initCharts(){
 function updTs(r){
   if(!tsChart)return;
   const adv=[],filling=[],rec=[];
-  for(let i=0;i<=r.N;i++){if(!isFinite(r.tA[i])||r.tA[i]>r.Tco)break;adv.push({x:(i/r.N)*r.L,y:r.tA[i]});}
+  // Advance: all stations the front actually reaches (incl. post-cutoff advance)
+  let iL=-1;
+  for(let i=0;i<=r.N;i++){if(!isFinite(r.tA[i]))break;adv.push({x:(i/r.N)*r.L,y:r.tA[i]});iL=i;}
   if(isFinite(r.tA[r.N])&&r.tA[r.N]<r.Tco){filling.push({x:r.L,y:r.tA[r.N]});filling.push({x:r.L,y:r.Tco});}
   for(let i=0;i<=r.N;i++){if(!isFinite(r.tR[i]))break;rec.push({x:(i/r.N)*r.L,y:r.tR[i]});}
-  tsChart.data.datasets[0].data=adv;tsChart.data.datasets[1].data=filling;tsChart.data.datasets[2].data=rec;tsChart.data.datasets[3].data=[{x:0,y:r.Tco},{x:r.L,y:r.Tco}];
+  // Front stopped short of the tail: close the opportunity-time band at the last wetted station
+  if(iL>=0&&iL<r.N&&rec.length&&r.tR[iL]>r.tA[iL]){rec.push({x:(iL/r.N)*r.L,y:r.tA[iL]});}
+  tsChart.data.datasets[0].data=adv;tsChart.data.datasets[1].data=filling;tsChart.data.datasets[2].data=rec;
+  // Tco line: cap at advance extent at Tco (not post-Tco advance for level basins)
+  let xAdvAtTco=0;for(let i=0;i<=r.N;i++){if(isFinite(r.tA[i])&&r.tA[i]<=r.Tco)xAdvAtTco=(i/r.N)*r.L;else break;}
+  tsChart.data.datasets[3].data=[{x:0,y:r.Tco},{x:xAdvAtTco||r.L,y:r.Tco}];
   const ym=Math.max(rec.length?rec[rec.length-1].y:r.Tco,r.Tco)*1.08;
   tsChart.options.scales.x.max=r.L;tsChart.options.scales.y.max=Math.ceil(ym);
   tsChart.options.scales.x.title.text=SYS==='SI'?'Distance (m)':'Distance (ft)';tsChart.update('none');
@@ -780,7 +1055,8 @@ function updPhase(t,r){
   document.getElementById('tD').textContent=`t = ${t.toFixed(1)} min`;
   const p=document.getElementById('pD'),filling=isFinite(r.tA[r.N])&&t>=r.tA[r.N]&&t<r.Tco;
   if(t<=0){p.className='ph pc';p.textContent='Ready';}
-  else if(t<r.tAdvEnd&&!filling){p.className='ph pa';p.textContent='Advance';}
+  else if(t<r.tAdvEnd&&!filling&&t<r.Tco){p.className='ph pa';p.textContent='Advance';}
+  else if(t<r.tAdvEnd&&t>=r.Tco){p.className='ph pa';p.textContent='Advance after cutoff';}
   else if(filling){p.className='ph pf';p.textContent='Filling';}
   else if(t>=r.Tco&&t<r.tEnd-5){p.className='ph pr';p.textContent='Recession';}
   else{p.className='ph pc';p.textContent='Complete';}
@@ -938,7 +1214,245 @@ document.getElementById('sQ').addEventListener('input',function(){document.getEl
 document.getElementById('sZreq').addEventListener('input',function(){document.getElementById('vZreq').textContent=SYS==='US'?(+this.value*.03937).toFixed(2)+' in':this.value+' mm';});
 document.getElementById('sTco').addEventListener('input',function(){document.getElementById('vTco').textContent=this.value+' min';});
 document.getElementById('sSpd').addEventListener('input',function(){document.getElementById('vSpd').textContent=this.value+' min/s';});
-window.addEventListener('load',()=>{const p=getP();const m={tA:Array(NS+1).fill(99999),tR:Array(NS+1).fill(99999),Z:Array(NS+1).fill(0),y0:.034,vR:4.8,S:p.S,L:p.L,W:p.W,bH:p.bH,N:NS,k:p.k,a:p.a,f0:p.f0,Tco:p.Tco,Zreq:p.Zreq,openEnd:endOpen,tAdvEnd:0,tEnd:300,Zavg:0,Zlq:0,DU:0,CU:0,VTW:0,V_ov:0,V_sideOv:0,V_tailOv:0,q:p.q,q_ov:0,q_max:999,nM:p.nM};simRes=m;initCharts();drawField(0,m);updPhase(0,m);updQInfo();});
+// ─── Tab switching ────────────────────────────────────────────────────────
+let activeTab='sim';
+function switchTab(t){
+  activeTab=t;
+  ['sim','eval','design'].forEach(id=>{
+    document.getElementById('tab-'+id).classList.toggle('on',id===t);
+    const el=document.getElementById('tabContent-'+id);
+    if(el)el.style.display=id===t?'':'none';
+  });
+}
+
+// ─── Irrigation type ──────────────────────────────────────────────────────
+let irrType='border';
+function setIrrType(type){
+  irrType=type;
+  const isBorder=type==='border';
+  document.getElementById('bBorder').classList.toggle('on',isBorder);
+  document.getElementById('bBorder').disabled=isBorder;
+  document.getElementById('bFurrow').classList.toggle('on',!isBorder);
+  document.getElementById('bFurrow').disabled=!isBorder;
+  document.getElementById('furrowPanel').style.display=isBorder?'none':'';
+  if(!isBorder)updFurrowInfo();
+}
+
+// ─── Furrow normal depth (Newton–Raphson, trapezoidal section) ────────────
+function furrowNormalDepth(Qf_mps,b0,zS,nM,S){
+  const sqS=Math.sqrt(Math.max(S,5e-5));
+  let y=0.05;
+  for(let i=0;i<80;i++){
+    const A=(b0+zS*y)*y,P=b0+2*y*Math.sqrt(1+zS*zS);
+    if(A<1e-12){y*=1.5;continue;}
+    const Qc=(1/nM)*Math.pow(A,5/3)/Math.pow(P,2/3)*sqS;
+    const dA=b0+2*zS*y,dP=2*Math.sqrt(1+zS*zS),R=A/P;
+    const dQ=(1/nM)*sqS*Math.pow(R,2/3)*A*(5/3*dA/A-2/3*dP/P);
+    if(Math.abs(dQ)<1e-15)break;
+    const dy=-(Qc-Qf_mps)/dQ;
+    y=Math.max(.001,y+Math.max(-.05,Math.min(.05,dy)));
+    if(Math.abs(dy)<1e-6)break;
+  }
+  return y;
+}
+
+function updFurrowInfo(){
+  if(irrType!=='furrow')return;
+  const b0=+document.getElementById('sB0').value;
+  const zS=+document.getElementById('sZS').value;
+  const fs=+document.getElementById('sFS').value;
+  const Q=+document.getElementById('sQ').value;
+  const W=+document.getElementById('sW').value;
+  const nM=SOILS[document.getElementById('sSoil').value].nM;
+  const S=Math.max(+document.getElementById('sSlope').value/100,5e-5);
+  const nF=Math.max(1,Math.round(W/fs));
+  const Qf=Q/nF/3600;
+  const y0=furrowNormalDepth(Qf,b0,zS,nM,S);
+  const A=(b0+zS*y0)*y0;
+  document.getElementById('vB0').textContent=b0.toFixed(2)+' m';
+  document.getElementById('vZS').textContent=zS.toFixed(2);
+  document.getElementById('vFS').textContent=fs.toFixed(2)+' m';
+  document.getElementById('furrowInfo').textContent=
+    `${nF} furrows · y₀ = ${(y0*1000).toFixed(0)} mm · A = ${(A*1e4).toFixed(1)} cm²`;
+}
+
+// ─── Evaluation tab ───────────────────────────────────────────────────────
+let evalChart=null,evalFitResult=null;
+function fitAdvanceCurve(){
+  const raw=document.getElementById('advData').value.trim();
+  if(!raw){alert('Enter advance data first.');return;}
+  const pts=[];
+  for(const line of raw.split('\n')){
+    const parts=line.trim().split(/[\s,\t]+/);
+    if(parts.length>=2){const x=parseFloat(parts[0]),t=parseFloat(parts[1]);if(isFinite(x)&&x>0&&isFinite(t)&&t>0)pts.push({x,t});}
+  }
+  if(pts.length<3){alert('Need at least 3 advance points.');return;}
+  pts.sort((a,b)=>a.x-b.x);
+  // OLS power-law fit in log-log space: ln(t) = ln(p) + r·ln(x)
+  const n=pts.length;let sx=0,sy=0,sxx=0,sxy=0;
+  for(const pt of pts){const lx=Math.log(pt.x),lt=Math.log(pt.t);sx+=lx;sy+=lt;sxx+=lx*lx;sxy+=lx*lt;}
+  const denom=n*sxx-sx*sx;
+  if(Math.abs(denom)<1e-12){alert('Degenerate data — all points at same distance?');return;}
+  const r_fit=(n*sxy-sx*sy)/denom;
+  const p_fit=Math.exp((sy-r_fit*sx)/n);
+  // Kostiakov a from Lewis-Milne: a = (r-1)/r (valid for infiltration-dominated advance)
+  const a_est=Math.max(0.10,Math.min(0.90,(r_fit-1)/r_fit));
+  // k from volume balance: q·tA_L = σz·L·k·tA_L^a  →  k = q·tA_L / (σz·L·tA_L^a)
+  const L=+document.getElementById('evalL').value;
+  const q_eval=+document.getElementById('evalQ').value; // m²/h = m³/h per m
+  const sigma_z=(1+a_est)/2;
+  const tA_L=p_fit*Math.pow(L,r_fit);
+  const k_est=Math.max(0.2,Math.min(50,(q_eval/60)*tA_L/(sigma_z*L/1000*Math.pow(tA_L,a_est))));
+  // RMSE
+  let sse=0;for(const pt of pts){const e=p_fit*Math.pow(pt.x,r_fit)-pt.t;sse+=e*e;}
+  const rmse=Math.sqrt(sse/n);
+  evalFitResult={r:r_fit,p:p_fit,a:a_est,k:k_est,rmse,pts,L,q:q_eval};
+  // Display results
+  document.getElementById('evalResults').style.display='';
+  document.getElementById('evalR').textContent=r_fit.toFixed(3);
+  document.getElementById('evalA').textContent=a_est.toFixed(3);
+  document.getElementById('evalK').textContent=k_est.toFixed(2);
+  document.getElementById('evalRMSE').textContent=rmse.toFixed(2);
+  document.getElementById('evalP').textContent=p_fit.toFixed(5);
+  // Draw measured vs fitted chart
+  const xMax=pts[pts.length-1].x;
+  const curve=[];for(let xi=0;xi<=xMax*1.02;xi+=xMax/60)curve.push({x:xi,y:p_fit*Math.pow(Math.max(0.1,xi),r_fit)});
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=dk?'#9ca3af':'#6b7280',gc=dk?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  if(evalChart)evalChart.destroy();
+  evalChart=new Chart(document.getElementById('evalC'),{type:'scatter',data:{datasets:[
+    {label:'Measured',data:pts.map(p=>({x:p.x,y:p.t})),pointRadius:5,pointBackgroundColor:'#4494CC',pointBorderColor:'#fff',pointBorderWidth:1.5,showLine:false},
+    {label:`Fitted t=p·x^r (r=${r_fit.toFixed(3)})`,data:curve,showLine:true,borderColor:'#E08040',borderWidth:2,pointRadius:0,tension:.3}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tc,boxWidth:20}}},
+    scales:{
+      x:{type:'linear',min:0,ticks:{font:{size:11},color:tc},grid:{color:gc},title:{display:true,text:'Distance (m)',font:{size:12},color:tc}},
+      y:{type:'linear',min:0,ticks:{font:{size:11},color:tc},grid:{color:gc},title:{display:true,text:'Advance time (min)',font:{size:12},color:tc}}},
+    animation:{duration:200}}});
+}
+function applyEvalToSim(){
+  if(!evalFitResult){alert('Fit the advance curve first.');return;}
+  const{a,k}=evalFitResult;
+  document.getElementById('sA').value=a.toFixed(2);
+  document.getElementById('vA').textContent=a.toFixed(2);
+  document.getElementById('sK').value=k.toFixed(1);
+  document.getElementById('vK').textContent=k.toFixed(1)+' mm/minᵃ';
+  switchTab('sim');
+  if(!accOpen)toggleAcc();
+}
+
+// ─── Design tab ───────────────────────────────────────────────────────────
+let designChart=null,designResults=null;
+function eaColor(ea,ok){
+  if(!ok)return'#505060';
+  if(ea>=85)return'#1a7f4b';
+  if(ea>=75)return'#2a9d55';
+  if(ea>=65)return'#52b788';
+  if(ea>=55)return'#e9c46a';
+  if(ea>=45)return'#f4a261';
+  return'#e76f51';
+}
+function runDesign(){
+  const p0=getP();
+  const Qmin=+document.getElementById('dQmin').value,Qmax=+document.getElementById('dQmax').value;
+  const Tmin=+document.getElementById('dTmin').value,Tmax=+document.getElementById('dTmax').value;
+  const dQtarg=+document.getElementById('dDUtar').value;
+  if(Qmax<=Qmin||Tmax<=Tmin){alert('Max must be greater than min.');return;}
+  const nQ=8,nT=8;
+  const Qs=[],Ts=[];
+  for(let i=0;i<nQ;i++)Qs.push(Qmin+(Qmax-Qmin)*i/(nQ-1));
+  for(let j=0;j<nT;j++)Ts.push(Tmin+(Tmax-Tmin)*j/(nT-1));
+  const grid=[];let bestEa=-1,bestCombo=null;
+  for(let j=0;j<nT;j++){
+    grid[j]=[];
+    for(let i=0;i<nQ;i++){
+      const Q=Qs[i],Tco=Math.round(Ts[j]);
+      let DU=0,Ea=0;
+      try{
+        const pp={...p0,Q_total:Q,q:Q/p0.W,Tco};
+        if(p0.irrType==='furrow'){const nF=p0.nFurrows||1;pp.q=Q/nF/(p0.furrowSpacing||1);const Qf=Q/nF/3600;pp.y0_furrow=furrowNormalDepth(Qf,p0.b0||.25,p0.zS||1,p0.nM,p0.S);}
+        const r=compute(pp,true);const eff=computeEff(r);
+        DU=r.DU;Ea=eff.Ea;
+        if(Ea>bestEa&&DU>=dQtarg){bestEa=Ea;bestCombo={Q,Tco,DU,Ea};}
+      }catch(e){}
+      grid[j].push({Q,Tco,DU,Ea,ok:DU>=dQtarg});
+    }
+  }
+  designResults={grid,Qs,Ts,nQ,nT,bestCombo,dQtarg};
+  showDesignResults();
+}
+function showDesignResults(){
+  const d=designResults;if(!d)return;
+  document.getElementById('designResultsDiv').style.display='';
+  document.getElementById('designPlaceholder').style.display='none';
+  const{grid,Qs,Ts,nQ,nT,bestCombo,dQtarg}=d;
+  // HTML colour table
+  let html='<table class="dGrid"><tr><th>Tco↓ / Q→</th>';
+  for(let i=0;i<nQ;i++)html+=`<th>${Math.round(Qs[i])}</th>`;
+  html+='</tr>';
+  for(let j=nT-1;j>=0;j--){
+    html+=`<tr><th>${Math.round(Ts[j])} min</th>`;
+    for(let i=0;i<nQ;i++){
+      const{Ea,DU,Q,Tco,ok}=grid[j][i];
+      const isOpt=bestCombo&&Math.abs(Q-bestCombo.Q)<1&&Math.abs(Tco-bestCombo.Tco)<1;
+      const bg=eaColor(Ea,ok);
+      html+=`<td style="background:${bg}"${isOpt?' class="opt"':''} title="Q=${Math.round(Q)} m³/h, Tco=${Math.round(Tco)} min | Ea=${Ea.toFixed(0)}% DU=${DU.toFixed(0)}%">`;
+      html+=`${isOpt?'★':''}${Ea.toFixed(0)}%<br><small style="opacity:.82;font-weight:400">${DU.toFixed(0)}%</small></td>`;
+    }
+    html+='</tr>';
+  }
+  html+=`<tr><td colspan="${nQ+1}" class="dLeg"><span style="background:#1a7f4b;padding:1px 7px;color:#fff;border-radius:3px;font-size:10px">Ea≥85</span> `;
+  html+=`<span style="background:#e9c46a;padding:1px 7px;color:#fff;border-radius:3px;font-size:10px">55–65</span> `;
+  html+=`<span style="background:#505060;padding:1px 7px;color:#fff;border-radius:3px;font-size:10px">DU&lt;target</span> `;
+  html+=`★ optimal | Q in m³/h</td></tr></table>`;
+  document.getElementById('designGrid').innerHTML=html;
+  if(bestCombo){
+    document.getElementById('designBest').innerHTML=
+      `<span style="color:var(--color-text-success)">★ Optimal: Q = ${Math.round(bestCombo.Q)} m³/h, Tco = ${Math.round(bestCombo.Tco)} min → Ea = ${bestCombo.Ea.toFixed(0)}%, DU = ${bestCombo.DU.toFixed(0)}%</span>`;
+  } else {
+    document.getElementById('designBest').textContent=`No combination met DU ≥ ${dQtarg}%. Try relaxing the constraint or widening the ranges.`;
+  }
+  // Scatter: Ea vs DU for all combos
+  const goodPts=[],badPts=[],optPt=[];
+  for(let j=0;j<nT;j++)for(let i=0;i<nQ;i++){const{Ea,DU,ok}=grid[j][i];(ok?goodPts:badPts).push({x:DU,y:Ea});}
+  if(bestCombo)optPt.push({x:bestCombo.DU,y:bestCombo.Ea});
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const tc=dk?'#9ca3af':'#6b7280',gc=dk?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';
+  if(designChart)designChart.destroy();
+  designChart=new Chart(document.getElementById('designC'),{type:'scatter',data:{datasets:[
+    {label:'DU ≥ target',data:goodPts,pointRadius:5,pointBackgroundColor:'rgba(42,157,85,.7)',pointBorderColor:'rgba(42,157,85,.9)',pointBorderWidth:1},
+    {label:'DU < target',data:badPts,pointRadius:4,pointBackgroundColor:'rgba(100,100,120,.35)',pointBorderColor:'rgba(100,100,120,.5)',pointBorderWidth:1},
+    {label:'Optimal ★',data:optPt,pointRadius:10,pointStyle:'star',pointBackgroundColor:'#FFD700',pointBorderColor:'#AA8800',pointBorderWidth:1.5}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'top',labels:{font:{size:11},color:tc,boxWidth:16}},
+      tooltip:{callbacks:{label:it=>`DU=${it.parsed.x.toFixed(0)}%, Ea=${it.parsed.y.toFixed(0)}%`}}},
+    scales:{
+      x:{type:'linear',min:0,max:100,title:{display:true,text:'Distribution uniformity DU LQ (%)',font:{size:12},color:tc},ticks:{font:{size:11},color:tc},grid:{color:gc}},
+      y:{type:'linear',min:0,max:100,title:{display:true,text:'Application efficiency Ea (%)',font:{size:12},color:tc},ticks:{font:{size:11},color:tc},grid:{color:gc}}},
+    animation:{duration:200}}});
+}
+
+window.addEventListener('load',()=>{
+  const p=getP();
+  const m={tA:Array(NS+1).fill(99999),tR:Array(NS+1).fill(99999),Z:Array(NS+1).fill(0),y0:.034,vR:4.8,S:p.S,L:p.L,W:p.W,bH:p.bH,N:NS,k:p.k,a:p.a,f0:p.f0,Tco:p.Tco,Zreq:p.Zreq,openEnd:endOpen,tAdvEnd:0,tEnd:300,Zavg:0,Zlq:0,DU:0,CU:0,VTW:0,V_ov:0,V_sideOv:0,V_tailOv:0,q:p.q,q_ov:0,q_max:999,nM:p.nM};
+  simRes=m;initCharts();drawField(0,m);updPhase(0,m);updQInfo();
+  // Furrow slider listeners
+  ['sB0','sZS','sFS'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.addEventListener('input',updFurrowInfo);
+  });
+  // Sync eval defaults from current sim params
+  document.getElementById('evalL').value=document.getElementById('sL').value;
+  document.getElementById('evalQ').value=document.getElementById('sQ').value;
+  document.getElementById('evalZreq').value=document.getElementById('sZreq').value;
+  // Sync design defaults
+  const curQ=+document.getElementById('sQ').value;
+  document.getElementById('dQmin').value=Math.max(1,Math.round(curQ*0.5));
+  document.getElementById('dQmax').value=Math.round(curQ*1.5);
+  document.getElementById('dTmin').value=30;
+  document.getElementById('dTmax').value=Math.round(+document.getElementById('sTco').value*2);
+  document.getElementById('dDUtar').value=75;
+});
 </script>
 </body>
 </html>
