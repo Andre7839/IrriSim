@@ -171,19 +171,19 @@ textarea.inp{resize:vertical;height:110px;font-family:'Courier New',monospace;fo
     <div class="rw"><label class="sl" for="sF0">f₀</label><span class="sv" id="vF0">0.15 mm/min</span></div>
     <input type="range" id="sF0" min="0.02" max="8.0" step="0.02" value="0.15">
   </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <span class="sl" style="white-space:nowrap">Border end</span>
-    <div class="et" style="flex:1">
-      <button class="eb on" id="bOpen" onclick="setEnd('open')" disabled>Open</button>
-      <button class="eb" id="bClosed" onclick="setEnd('closed')">Closed</button>
-    </div>
+  <div>
+    <div class="rw"><label class="sl" for="sIrr">Irrigation type</label></div>
+    <select id="sIrr" style="width:100%;font-size:13px" onchange="setIrrType(this.value)">
+      <option value="border" selected>Border</option>
+      <option value="furrow">Furrow</option>
+    </select>
   </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <span class="sl" style="white-space:nowrap">Irr. type</span>
-    <div class="et" style="flex:1">
-      <button class="eb on" id="bBorder" onclick="setIrrType('border')" disabled>Border</button>
-      <button class="eb" id="bFurrow" onclick="setIrrType('furrow')">Furrow</button>
-    </div>
+  <div>
+    <div class="rw"><label class="sl" for="sEnd">Tail end</label></div>
+    <select id="sEnd" style="width:100%;font-size:13px" onchange="setEnd(this.value)">
+      <option value="open" selected>Open (free drainage)</option>
+      <option value="closed">Closed (diked)</option>
+    </select>
   </div>
   <div id="furrowPanel" style="display:none">
     <div class="sep">Furrow geometry</div>
@@ -731,7 +731,7 @@ function drawField(t,r){
     cx.fillStyle=`rgba(${dk?'60,155,90':'55,148,82'},${.22+fr*.45})`;
     cx.fillRect(pxFn(xi),syFn(xi),pxFn((i+1)/NS)-pxFn(xi)+1,wd);
   }
-  const xAdv=cAdv(t,r),xRec=cRec(t,r);
+  const xAdv=cAdvI(t,r),xRec=cRec(t,r);
   if(xAdv>xRec+.5){
     for(let i=0;i<NS;i++){
       const xi=i/NS,xp=xi*r.L;
@@ -1153,7 +1153,7 @@ function startAnim(){
     if(anim.t-lastM>3){updMetricsLive(simRes,anim.t);updWp(simRes,anim.t);lastM=anim.t;}
     // Sync time-space chart: "Now" line at current time showing wetted extent
     if(tsChart){
-      const xA=cAdv(anim.t,simRes),xR=cRec(anim.t,simRes);
+      const xA=cAdvI(anim.t,simRes),xR=cRec(anim.t,simRes);
       const nd=[];
       if(xA>0){nd.push({x:xR,y:anim.t});nd.push({x:xA,y:anim.t});}
       tsChart.data.datasets[4].data=nd;
@@ -1175,7 +1175,7 @@ function stopAnim(){
     updWp(simRes,anim.t);
   }
 }
-function setEnd(v){endOpen=v==='open';const bO=document.getElementById('bOpen'),bC=document.getElementById('bClosed');bO.classList.toggle('on',endOpen);bO.disabled=endOpen;bC.classList.toggle('on',!endOpen);bC.disabled=!endOpen;}
+function setEnd(v){endOpen=v==='open';const s=document.getElementById('sEnd');if(s&&s.value!==v)s.value=v;}
 function toggleAcc(){accOpen=!accOpen;document.getElementById('accD').style.maxHeight=accOpen?'230px':'0';document.getElementById('accI').style.transform=accOpen?'rotate(180deg)':'';}
 function setU(s){
   SYS=s;document.getElementById('bSI').classList.toggle('on',s==='SI');document.getElementById('bUS').classList.toggle('on',s==='US');updAllLabels();
@@ -1230,10 +1230,7 @@ let irrType='border';
 function setIrrType(type){
   irrType=type;
   const isBorder=type==='border';
-  document.getElementById('bBorder').classList.toggle('on',isBorder);
-  document.getElementById('bBorder').disabled=isBorder;
-  document.getElementById('bFurrow').classList.toggle('on',!isBorder);
-  document.getElementById('bFurrow').disabled=!isBorder;
+  const sI=document.getElementById('sIrr');if(sI&&sI.value!==type)sI.value=type;
   document.getElementById('furrowPanel').style.display=isBorder?'none':'';
   if(!isBorder)updFurrowInfo();
 }
